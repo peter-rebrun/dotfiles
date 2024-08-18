@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+function get_bare_worktree_path {
+  echo $(git worktree list | grep bare | awk '{ print $1 }' )
+}
+
+function wt {
+  case "$1" in
+    list)
+      git worktree list
+      ;;
+    add)
+      shift
+      cd -- $(get_bare_worktree_path)
+      git worktree add "$@"
+      cd $1
+      ;;
+    remove)
+      local dir=$(git worktree list | grep -v bare | fzf --tmux | awk '{ print $1 }')
+      if [ -n "$dir" ]; then
+        if [ "$(pwd)" = "$dir" ]; then
+          cd -- $(get_bare_worktree_path)
+        fi
+        echo "Removing worktree: $dir"
+        git worktree remove "$dir"
+      fi
+      ;;
+    "")
+      local dir=$(git worktree list | fzf --tmux | awk '{ print $1 }')
+      if [ -n "$dir" ]; then
+        echo "Changing current worktree: $dir"
+        cd "$dir"
+      fi
+      ;;
+    *)
+      echo "Usage: wt {list|add|remove}"
+      return 1
+      ;;
+  esac
+}
+
