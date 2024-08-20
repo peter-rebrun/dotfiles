@@ -112,8 +112,8 @@ fi
 # Aliases
 alias vim="nvim"
 alias ls="eza --icons=always --group-directories-first"
-alias ll="ls -lh"
-alias l="ls -lha"
+alias l="ls -lh"
+alias ll="ls -lha"
 
 
 export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
