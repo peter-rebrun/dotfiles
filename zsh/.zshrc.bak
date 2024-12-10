@@ -133,5 +133,4 @@ export FZF_TMUX_OPTS="-p"
 
 # Import functions to mange git worktrees
 source /Users/peter.rebrun/bin/wt
-source /Users/peter.rebrun/bin/connect
 

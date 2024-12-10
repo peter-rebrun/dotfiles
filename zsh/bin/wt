@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function get_bare_worktree_path {
-  echo $(git worktree list | grep bare | awk '{ print $1 }' )
+  git worktree list | grep bare | awk '{ print $1 }'
 }
 
 function wt {
@@ -11,29 +11,43 @@ function wt {
       ;;
     add)
       shift
-      cd -- $(get_bare_worktree_path)
+      cd -- "$(get_bare_worktree_path)"  || return 1
       git worktree add "$@"
-      cd $1
+      cd "$1" || return 1
       ;;
     remove)
-      local dir=$(git worktree list | grep -v bare | fzf --tmux | awk '{ print $1 }')
+      local dir
+      dir=$(git worktree list | grep -v bare | fzf --tmux | awk '{ print $1 }')
       if [ -n "$dir" ]; then
         if [ "$(pwd)" = "$dir" ]; then
-          cd -- $(get_bare_worktree_path)
+          cd -- "$(get_bare_worktree_path)" || return 1
         fi
         echo "Removing worktree: $dir"
         git worktree remove "$dir"
       fi
       ;;
+    remove-all)
+      cd -- "$(get_bare_worktree_path)"  || return 1
+      for dir in $(git worktree list | grep -vE "bare|master" | awk '{ print $1 }'); do
+        read -r -k 1 "?Remove $dir worktree? [y/N]"
+        echo
+        case $REPLY in
+          y|Y ) git worktree remove "$dir";;
+          "" ) continue;;
+          * ) continue;;
+        esac
+      done
+      ;;
     "")
-      local dir=$(git worktree list | fzf --tmux | awk '{ print $1 }')
+      local dir
+      dir=$(git worktree list | fzf --tmux | awk '{ print $1 }')
       if [ -n "$dir" ]; then
         echo "Changing current worktree: $dir"
-        cd "$dir"
+        cd "$dir" || return 1
       fi
       ;;
     *)
-      echo "Usage: wt {list|add|remove}"
+      echo "Usage: wt {list|add|remove|remove-all}"
       return 1
       ;;
   esac

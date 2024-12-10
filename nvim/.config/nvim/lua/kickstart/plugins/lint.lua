@@ -18,7 +18,7 @@ return {
       }
       lint.linters_by_ft = {
         -- markdown = { 'markdownlint' },
-        markdown = { 'vale' },
+        -- markdown = { 'vale' },
         python = { 'mypy' },
       }
 

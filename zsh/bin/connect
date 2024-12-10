@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+function connect_to_bastion {
+  local instance_id
+  instance_id=$(aws ec2 describe-instances \
+    --filters 'Name=tag:tf-service,Values=bastion' 'Name=instance-state-name,Values=running' \
+    --query 'Reservations[*].Instances[*].InstanceId' --output text --region "$1")
+
+  local username
+  username=$(aws iam get-user --query "User.UserName" --output text)
+
+  aws ec2-instance-connect ssh --instance-id "${instance_id}" \
+    --os-user "${username}" --connection-type eice --region "$1"
+}
+
+function connect {
+  case $(echo "$1"  | tr '[:upper:]' '[:lower:]') in
+    stag | staging)
+      connect_to_bastion us-west-1
+      ;;
+    prod | production)
+      connect_to_bastion ap-southeast-2
+      ;;
+    *)
+      echo "Usage: connect {prod|stag}"
+      return 1
+      ;;
+  esac
+}
+
+alias c="connect"

@@ -700,6 +700,7 @@ require('lazy').setup({
             },
           },
         },
+        bashls = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -763,6 +764,8 @@ require('lazy').setup({
         -- python = { "isort", "black" },
         python = { 'ruff_organize_imports', 'ruff_format' },
         terraform = { 'terraform_fmt' },
+        javascript = { 'prettierd' },
+        typescript = { 'prettierd' },
         --
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
