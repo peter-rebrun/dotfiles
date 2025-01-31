@@ -211,6 +211,10 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- Open Tmux panes
+vim.keymap.set('n', '<leader>ph', '<cmd>silent !tmux split-window -h<CR>', { desc = 'New Tmux pane [H]orizontally' })
+vim.keymap.set('n', '<leader>pv', '<cmd>silent !tmux split-window -v<CR>', { desc = 'New Tmux pane [V]ertically' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -322,6 +326,8 @@ require('lazy').setup({
         { '<leader>t_', hidden = true },
         { '<leader>w', group = '[W]orkspace' },
         { '<leader>w_', hidden = true },
+        { '<leader>p', group = 'Tmux [P]ane' },
+        { '<leader>p_', hidden = true },
       }
       -- visual mode
       require('which-key').add { '<leader>h', desc = 'Git [H]unk', mode = 'v' }
