@@ -683,7 +683,7 @@ require('lazy').setup({
         ansiblels = {},
         dockerls = {},
         docker_compose_language_service = {},
-        tsserver = {},
+        ts_ls = {},
         yamlls = {
           settings = {
             yaml = {
@@ -1003,6 +1003,7 @@ require('lazy').setup({
   require 'kickstart.plugins.fugitive',
   require 'kickstart.plugins.tmux-navigator',
   require 'kickstart.plugins.noice',
+  require 'kickstart.plugins.debug',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
