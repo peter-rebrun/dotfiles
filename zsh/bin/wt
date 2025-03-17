@@ -14,6 +14,10 @@ function wt {
       cd -- "$(get_bare_worktree_path)"  || return 1
       git worktree add "$@"
       cd "$1" || return 1
+      echo "Fetching canges"
+      git fetch --all || return 1
+      echo "Merging with master"
+      git merge origin/master || return 1
       ;;
     remove)
       local dir

@@ -417,7 +417,7 @@ require('lazy').setup({
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
-      pcall(require('telescope').load_extension 'git_worktree')
+      pcall(require('telescope').load_extension, 'git_worktree')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -679,7 +679,14 @@ require('lazy').setup({
           },
         },
         ruff = {},
-        terraformls = {},
+        terraformls = {
+          initializationOptions = {
+            indexing = {
+              ignoreDirectoryNames = { '.terraform' },
+              ignorePaths = { '.terraform' },
+            },
+          },
+        },
         ansiblels = {},
         dockerls = {},
         docker_compose_language_service = {},
