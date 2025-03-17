@@ -20,27 +20,25 @@ function wt {
       git merge origin/master || return 1
       ;;
     remove)
-      local dir
-      dir=$(git worktree list | grep -v bare | fzf --tmux | awk '{ print $1 }')
-      if [ -n "$dir" ]; then
-        if [ "$(pwd)" = "$dir" ]; then
-          cd -- "$(get_bare_worktree_path)" || return 1
+      shift
+      if [[ "$1" == "--all" ]]; then
+        cd -- "$(get_bare_worktree_path)"  || return 1
+        for dir in $(git worktree list | grep -vE "bare|master" | awk '{ print $1 }'); do
+           git worktree remove "$dir"
+        done
+      elif [[ "$1" == "" ]]; then
+        local dir
+        dir=$(git worktree list | grep -v bare | fzf --tmux | awk '{ print $1 }')
+        if [ -n "$dir" ]; then
+          if [ "$(pwd)" = "$dir" ]; then
+            cd -- "$(get_bare_worktree_path)" || return 1
+          fi
+          echo "Removing worktree: $dir"
+          git worktree remove "$dir"
         fi
-        echo "Removing worktree: $dir"
-        git worktree remove "$dir"
+      else
+        echo "Usage: wt {list|add|remove|remove --all}"
       fi
-      ;;
-    remove-all)
-      cd -- "$(get_bare_worktree_path)"  || return 1
-      for dir in $(git worktree list | grep -vE "bare|master" | awk '{ print $1 }'); do
-        read -r -k 1 "?Remove $dir worktree? [y/N]"
-        echo
-        case $REPLY in
-          y|Y ) git worktree remove "$dir";;
-          "" ) continue;;
-          * ) continue;;
-        esac
-      done
       ;;
     "")
       local dir
@@ -51,7 +49,7 @@ function wt {
       fi
       ;;
     *)
-      echo "Usage: wt {list|add|remove|remove-all}"
+      echo "Usage: wt {list|add|remove|remove --all}"
       return 1
       ;;
   esac
