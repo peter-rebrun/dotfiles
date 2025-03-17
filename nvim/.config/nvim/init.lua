@@ -952,6 +952,7 @@ require('lazy').setup({
         'lua',
         'luadoc',
         'markdown',
+        'markdown_inline',
         'vim',
         'vimdoc',
         'python',
@@ -1011,6 +1012,7 @@ require('lazy').setup({
   require 'kickstart.plugins.tmux-navigator',
   require 'kickstart.plugins.noice',
   require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.obsidian',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
