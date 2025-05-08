@@ -664,19 +664,29 @@ require('lazy').setup({
             },
           },
         },
-        pyright = {
-          settings = {
-            pyright = { autoImportCompletion = true },
-            python = {
-              analysis = {
-                autoSearchPaths = true,
-                diagnosticMode = 'openFilesOnly',
-                useLibraryCodeForTypes = true,
-                typeCheckingMode = 'off',
-              },
-              pythonPath = './.venv/bin/python',
-            },
+        -- pyright = {
+        --   settings = {
+        --     pyright = { autoImportCompletion = true },
+        --     python = {
+        --       analysis = {
+        --         autoSearchPaths = true,
+        --         diagnosticMode = 'openFilesOnly',
+        --         useLibraryCodeForTypes = true,
+        --         typeCheckingMode = 'off',
+        --       },
+        --       pythonPath = './.venv/bin/python',
+        --     },
+        --   },
+        -- },
+        basedpyright = {
+          analysis = {
+            autoImportCompletions = true,
+            autoSearchPaths = true,
+            diagnosticMode = 'workspace',
+            typeCheckingMode = 'basic', -- standard, strict, all, off, basic
+            useLibraryCodeForTypes = true,
           },
+          -- python = { venvPath = '.venv/bin/python' }, -- this is a bad config},
         },
         ruff = {},
         terraformls = {
@@ -775,7 +785,7 @@ require('lazy').setup({
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
-        python = { 'ruff_organize_imports', 'ruff_format' },
+        python = { 'ruff_fix', 'ruff_organize_imports', 'ruff_format' },
         terraform = { 'terraform_fmt' },
         javascript = { 'prettierd' },
         typescript = { 'prettierd' },
@@ -1010,7 +1020,7 @@ require('lazy').setup({
   require 'kickstart.plugins.gitsigns',
   require 'kickstart.plugins.fugitive',
   require 'kickstart.plugins.tmux-navigator',
-  require 'kickstart.plugins.noice',
+  -- require 'kickstart.plugins.noice',
   require 'kickstart.plugins.debug',
   require 'kickstart.plugins.obsidian',
 
