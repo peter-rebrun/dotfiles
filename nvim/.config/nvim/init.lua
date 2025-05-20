@@ -328,6 +328,8 @@ require('lazy').setup({
         { '<leader>w_', hidden = true },
         { '<leader>p', group = 'Tmux [P]ane' },
         { '<leader>p_', hidden = true },
+        { '<leader>g', group = '[G]it Link' },
+        { '<leader>g_', hidden = true },
       }
       -- visual mode
       require('which-key').add { '<leader>h', desc = 'Git [H]unk', mode = 'v' }
@@ -423,6 +425,7 @@ require('lazy').setup({
       local builtin = require 'telescope.builtin'
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
+      vim.keymap.set('n', '<leader>sm', '<cmd>Telescope notify<cr>', { desc = '[S]earch [M]essages' })
       -- vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
       vim.keymap.set(
         'n',
@@ -724,6 +727,7 @@ require('lazy').setup({
           },
         },
         bashls = {},
+        intelephense = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -775,7 +779,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true, dockerfile = true }
+        local disable_filetypes = { c = true, cpp = true, dockerfile = true, php = true }
         return {
           timeout_ms = 500,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
@@ -1020,9 +1024,10 @@ require('lazy').setup({
   require 'kickstart.plugins.gitsigns',
   require 'kickstart.plugins.fugitive',
   require 'kickstart.plugins.tmux-navigator',
-  -- require 'kickstart.plugins.noice',
+  require 'kickstart.plugins.noice',
   require 'kickstart.plugins.debug',
   require 'kickstart.plugins.obsidian',
+  require 'kickstart.plugins.gitlinker',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
