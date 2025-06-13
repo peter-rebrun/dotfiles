@@ -167,11 +167,6 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 15
 
--- Folding using treesitter
--- Looks like still not relesed https://www.reddit.com/r/neovim/comments/16xz3q9/treesitter_highlighted_folds_are_now_in_neovim/
--- vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
--- vim.opt.foldtext = 'v:lua.vim.treesitter.foldtext()'
-
 -- Do not wrap text longer than screean size
 vim.opt.wrap = false
 
@@ -225,7 +220,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
-    vim.highlight.on_yank()
+    vim.hl.on_yank()
   end,
 })
 
@@ -252,6 +247,24 @@ vim.api.nvim_create_autocmd('VimResized', {
   command = 'wincmd =',
   desc = 'Automatically resize windows when the host window size changes.',
 })
+
+-- Folding
+vim.api.nvim_create_autocmd({ 'FileType' }, {
+  callback = function()
+    -- check if treesitter has parser
+    if require('nvim-treesitter.parsers').has_parser() then
+      -- use treesitter folding
+      vim.opt.foldmethod = 'expr'
+      vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
+    else
+      -- use alternative foldmethod
+      vim.opt.foldmethod = 'syntax'
+    end
+  end,
+})
+-- disable folding on startup
+vim.opt.foldenable = false
+vim.opt.foldlevel = 20
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
