@@ -1,0 +1,16 @@
+bitwarden
+chatgpt
+firefox
+font-jetbrains-mono-nerd-font
+jordanbaird-ice
+linearmouse
+logi-options+
+obsidian
+onlyoffice
+orbstack
+raycast
+shottr
+syncthing
+syncthing-app
+wezterm
+whatsapp
