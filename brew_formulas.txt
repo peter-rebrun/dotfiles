@@ -19,3 +19,5 @@ uv
 wget
 zsh-autosuggestions
 zsh-syntax-highlighting
+bitwarden-cli
+go

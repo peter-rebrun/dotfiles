@@ -206,9 +206,29 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
--- Open Tmux panes
-vim.keymap.set('n', '<leader>ph', '<cmd>silent !tmux split-window -h<CR>', { desc = 'New Tmux pane [H]orizontally' })
-vim.keymap.set('n', '<leader>pv', '<cmd>silent !tmux split-window -v<CR>', { desc = 'New Tmux pane [V]ertically' })
+-- Split Tmux panes
+vim.keymap.set('n', '<leader>sth', '<cmd>silent !tmux split-window -h<CR>', { desc = '[S]plit [T]mux pane [H]orizontally' })
+vim.keymap.set('n', '<leader>stv', '<cmd>silent !tmux split-window -v<CR>', { desc = '[S]plit [T]mux pane [V]ertically' })
+
+-- Better paste behavior
+vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without yanking' })
+
+-- Delete without yanking
+-- vim.keymap.set({ 'n', 'v' }, '<leader>d', '"_d', { desc = 'Delete without yanking' })
+
+-- Splitting
+vim.keymap.set('n', '<leader>sv', ':vsplit<CR>', { desc = '[S]plit window [v]ertically' })
+vim.keymap.set('n', '<leader>sh', ':split<CR>', { desc = '[S]plit window [h]orizontally' })
+
+-- Move lines up/down
+vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { desc = 'Move line down' })
+vim.keymap.set('n', '<A-k>', ':m .-2<CR>==', { desc = 'Move line up' })
+vim.keymap.set('v', '<A-j>', ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
+vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
+
+-- Better indenting in visual mode
+vim.keymap.set('v', '<', '<gv', { desc = 'Indent left and reselect' })
+vim.keymap.set('v', '>', '>gv', { desc = 'Indent right and reselect' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -333,7 +353,7 @@ require('lazy').setup({
         { '<leader>h_', hidden = true },
         { '<leader>r', group = '[R]ename' },
         { '<leader>r_', hidden = true },
-        { '<leader>s', group = '[S]earch' },
+        { '<leader>s', group = '[S]earch/[S]plit' },
         { '<leader>s_', hidden = true },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>t_', hidden = true },
@@ -343,6 +363,8 @@ require('lazy').setup({
         { '<leader>p_', hidden = true },
         { '<leader>g', group = '[G]it Link' },
         { '<leader>g_', hidden = true },
+        { '<leader>o', group = '[O]bsidian' },
+        { '<leader>o_', hidden = true },
       }
       -- visual mode
       require('which-key').add { '<leader>h', desc = 'Git [H]unk', mode = 'v' }
@@ -436,7 +458,7 @@ require('lazy').setup({
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
-      vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
+      -- vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sm', '<cmd>Telescope notify<cr>', { desc = '[S]earch [M]essages' })
       -- vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
@@ -674,6 +696,9 @@ require('lazy').setup({
             Lua = {
               completion = {
                 callSnippet = 'Replace',
+              },
+              diagnostics = {
+                globals = { 'vim' },
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
               -- diagnostics = { disable = { 'missing-fields' } },
