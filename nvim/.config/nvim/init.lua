@@ -882,9 +882,22 @@ require('lazy').setup({
               typeCheckingMode = 'basic', -- standard, strict, all, off, basic
               useLibraryCodeForTypes = true,
             },
+            capabilities = {
+              offsetEncoding = { 'utf-16' },
+              general = {
+                positionEncodings = { 'utf-16' },
+              },
+            },
             -- python = { venvPath = '.venv/bin/python' }, -- this is a bad config},
           },
-          ruff = {},
+          ruff = {
+            capabilities = {
+              offsetEncoding = { 'utf-16' },
+              general = {
+                positionEncodings = { 'utf-16' },
+              },
+            },
+          },
           terraformls = {
             initializationOptions = {
               indexing = {
