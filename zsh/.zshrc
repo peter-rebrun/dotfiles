@@ -131,7 +131,6 @@ source $HOME/bin/wt
 
 eval "$(starship init zsh)"
 
-export TIPTAP_TOKEN="akrpv5tkdBwiSaYq1L64UV6/pKb9C6kY0Gd/0mXV6gUAoXEHuVdbP9Xk3y5AJBfA"
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
 fpath=(/Users/peter/.docker/completions $fpath)
 autoload -Uz compinit
