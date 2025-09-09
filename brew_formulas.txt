@@ -6,7 +6,6 @@ fzf
 git
 luarocks
 neovim
-nvm
 prettierd
 ripgrep
 ruff
@@ -19,5 +18,4 @@ uv
 wget
 zsh-autosuggestions
 zsh-syntax-highlighting
-bitwarden-cli
 go

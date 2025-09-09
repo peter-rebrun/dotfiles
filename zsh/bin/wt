@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function get_bare_worktree_path {
-  git worktree list | grep bare | awk '{ print $1 }'
+  git worktree list | grep "(bare)" | awk '{ print $1 }'
 }
 
 function wt {
@@ -16,19 +16,21 @@ function wt {
       cd "$1" || return 1
       echo "Fetching canges"
       git fetch --all || return 1
-      echo "Merging with master"
-      git merge origin/master || return 1
+      # echo "Merging with master"
+      # git merge origin/master || return 1
+      echo "Merging with develop"
+      git merge origin/develop || return 1
       ;;
     remove)
       shift
       if [[ "$1" == "--all" ]]; then
         cd -- "$(get_bare_worktree_path)"  || return 1
-        for dir in $(git worktree list | grep -vE "bare|master" | awk '{ print $1 }'); do
+        for dir in $(git worktree list | grep -vE "(bare)|master|develop" | awk '{ print $1 }'); do
            git worktree remove "$dir"
         done
       elif [[ "$1" == "" ]]; then
         local dir
-        dir=$(git worktree list | grep -v bare | fzf --tmux | awk '{ print $1 }')
+        dir=$(git worktree list | grep -v "(bare)" | fzf --tmux | awk '{ print $1 }')
         if [ -n "$dir" ]; then
           if [ "$(pwd)" = "$dir" ]; then
             cd -- "$(get_bare_worktree_path)" || return 1

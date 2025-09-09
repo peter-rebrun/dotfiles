@@ -20,6 +20,7 @@ return {
         -- markdown = { 'markdownlint' },
         -- markdown = { 'vale' },
         python = { 'ruff' },
+        terraform = { 'tflint' },
       }
 
       -- To allow other plugins to add linters to require('lint').linters_by_ft,

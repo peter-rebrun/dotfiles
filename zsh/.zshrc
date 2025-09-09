@@ -122,7 +122,7 @@ export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh
 export PATH="$PATH:$HOME/.local/bin"
 
 # Set up fzf key bindings and fuzzy completion
-source <(fzf --zsh)
+FZF_CTRL_T_COMMAND= source <(fzf --zsh)
 # export FZF_CTRL_R_OPTS="--reverse"
 export FZF_TMUX_OPTS="-p"
 
@@ -130,3 +130,19 @@ export FZF_TMUX_OPTS="-p"
 source $HOME/bin/wt
 
 eval "$(starship init zsh)"
+
+export TIPTAP_TOKEN="akrpv5tkdBwiSaYq1L64UV6/pKb9C6kY0Gd/0mXV6gUAoXEHuVdbP9Xk3y5AJBfA"
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/peter/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
+export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
+export PATH="$HOME/.ebcli-virtual-env/executables:$PATH"
+
+# bun completions
+[ -s "/Users/peter/.bun/_bun" ] && source "/Users/peter/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"

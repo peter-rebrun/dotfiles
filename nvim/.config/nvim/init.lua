@@ -188,6 +188,13 @@ vim.o.softtabstop = 2
 -- Do not wrap text longer than screean size
 vim.o.wrap = false
 
+vim.filetype.add {
+  extension = {
+    tf = 'terraform',
+    tfvars = 'terraform', -- Also include .tfvars files for consistency
+  },
+}
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
