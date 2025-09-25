@@ -145,3 +145,5 @@ export PATH="$HOME/.ebcli-virtual-env/executables:$PATH"
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+source $HOME/.zsh_splose

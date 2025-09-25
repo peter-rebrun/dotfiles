@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+#TODO: determine the trunk branch name usein `git remote show origin | sed -n '/HEAD branch/s/.*: //p'`
+
 function get_bare_worktree_path {
   git worktree list | grep "(bare)" | awk '{ print $1 }'
 }
@@ -18,14 +20,14 @@ function wt {
       git fetch --all || return 1
       # echo "Merging with master"
       # git merge origin/master || return 1
-      echo "Merging with develop"
-      git merge origin/develop || return 1
+      echo "Merging with main"
+      git merge origin/main || return 1
       ;;
     remove)
       shift
       if [[ "$1" == "--all" ]]; then
         cd -- "$(get_bare_worktree_path)"  || return 1
-        for dir in $(git worktree list | grep -vE "(bare)|master|develop" | awk '{ print $1 }'); do
+        for dir in $(git worktree list | grep -vE "\(bare\)|master|main" | awk '{ print $1 }'); do
            git worktree remove "$dir"
         done
       elif [[ "$1" == "" ]]; then
