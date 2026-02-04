@@ -1,12 +1,41 @@
 return {
-
   { -- Linting
     'mfussenegger/nvim-lint',
+    dependencies = {
+      'mason-org/mason.nvim',
+      {
+        'rshkarin/mason-nvim-lint',
+        opts = {
+          automatic_installation = true,
+          -- Optional: list of linters to ensure are installed immediately upon startup.
+          -- These names must match the mason registry names.
+          ensure_installed = {
+            'ruff',
+            'mypy',
+            'tflint',
+          },
+        },
+      },
+    },
     event = { 'BufReadPre', 'BufNewFile' },
     config = function()
       local lint = require 'lint'
+      local mypy = require('lint').linters.mypy
+      mypy.args = {
+        '--show-column-numbers',
+        '--show-error-end',
+        '--hide-error-codes',
+        '--hide-error-context',
+        '--no-color-output',
+        '--no-error-summary',
+        '--no-pretty',
+        '--python-executable .venv/bin/python',
+      }
       lint.linters_by_ft = {
-        markdown = { 'markdownlint' },
+        -- markdown = { 'markdownlint' },
+        -- markdown = { 'vale' },
+        python = { 'ruff' },
+        terraform = { 'tflint' },
       }
 
       -- To allow other plugins to add linters to require('lint').linters_by_ft,
@@ -53,6 +82,7 @@ return {
           if vim.bo.modifiable then
             lint.try_lint()
           end
+          require('lint').try_lint()
         end,
       })
     end,

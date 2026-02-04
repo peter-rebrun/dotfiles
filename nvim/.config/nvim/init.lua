@@ -195,6 +195,11 @@ vim.filetype.add {
   },
 }
 
+-- Togle inline LSP diagnostics
+vim.keymap.set('n', '<leader>td', function()
+  vim.diagnostic.enable(not vim.diagnostic.is_enabled())
+end, { silent = true, noremap = true, desc = '[T]oggle [D]iagnostics' })
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -293,20 +298,6 @@ vim.api.nvim_create_autocmd('VimResized', {
   desc = 'Automatically resize windows when the host window size changes.',
 })
 
--- Folding
-vim.api.nvim_create_autocmd({ 'FileType' }, {
-  callback = function()
-    -- check if treesitter has parser
-    if require('nvim-treesitter.parsers').has_parser() then
-      -- use treesitter folding
-      vim.o.foldmethod = 'expr'
-      vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
-    else
-      -- use alternative foldmethod
-      vim.o.foldmethod = 'syntax'
-    end
-  end,
-})
 -- disable folding on startup
 vim.o.foldenable = false
 vim.o.foldlevel = 20
@@ -454,7 +445,7 @@ require('lazy').setup({
         { '<leader>d', group = '[D]ocument' },
         { '<leader>r', group = '[R]ename' },
         { '<leader>s', group = '[S]earch/[S]plit' },
-        { '<leader>w', group = '[W]orkspace' },
+        { '<leader>w', group = 'Git [W]orktree' },
         { '<leader>g', group = '[G]it Link' },
         { '<leader>o', group = '[O]bsidian' },
       },
@@ -471,7 +462,7 @@ require('lazy').setup({
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
-    branch = '0.1.x',
+    version = '*',
     dependencies = {
       'nvim-lua/plenary.nvim',
       { -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -533,7 +524,14 @@ require('lazy').setup({
         --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
         --   },
         -- },
-        -- pickers = {}
+        pickers = {
+          live_grep = {
+            additional_args = { '--hidden' },
+          },
+          find_files = {
+            hidden = true, -- Use this to show hidden files in find_files
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -813,7 +811,7 @@ require('lazy').setup({
       -- https://github.com/Saghen/blink.cmp/blob/102db2f5996a46818661845cf283484870b60450/plugin/blink-cmp.lua
       -- It has been left here as a comment for educational purposes (as the predecessor completion plugin required this explicit step).
       --
-      -- local capabilities = require("blink.cmp").get_lsp_capabilities()
+      local capabilities = require('blink.cmp').get_lsp_capabilities()
 
       -- Language servers can broadly be installed in the following ways:
       --  1) via the mason package manager; or
@@ -965,8 +963,15 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers.mason or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'prettierd',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+
+      for name, server in pairs(servers) do
+        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+        vim.lsp.config(name, server)
+        vim.lsp.enable(name)
+      end
 
       -- Either merge all additional server configs from the `servers.mason` and `servers.others` tables
       -- to the default language server configs as provided by nvim-lspconfig or
@@ -1026,6 +1031,8 @@ require('lazy').setup({
         terraform = { 'terraform_fmt' },
         javascript = { 'prettierd' },
         typescript = { 'prettierd' },
+        mjs = { 'prettierd' },
+        javascriptreact = { 'prettierd' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -1066,6 +1073,7 @@ require('lazy').setup({
         },
         opts = {},
       },
+      { 'saghen/blink.compat', lazy = true, version = false },
       'folke/lazydev.nvim',
     },
     --- @module 'blink.cmp'
@@ -1108,7 +1116,7 @@ require('lazy').setup({
         documentation = { auto_show = false, auto_show_delay_ms = 500 },
       },
       sources = {
-        default = { 'lsp', 'path', 'snippets', 'lazydev' },
+        default = { 'lsp', 'path', 'snippets', 'lazydev', 'buffer' },
         providers = {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
         },
@@ -1127,7 +1135,7 @@ require('lazy').setup({
     },
   },
 
-  require 'kickstart.plugins.catppuccin',
+  require 'custom.plugins.catppuccin',
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
@@ -1171,54 +1179,39 @@ require('lazy').setup({
   },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
-    opts = {
-      ensure_installed = {
+    config = function()
+      local filetypes = {
         'bash',
         'c',
         'diff',
+        'dockerfile',
         'html',
+        'javascript',
+        'json',
         'lua',
         'luadoc',
         'markdown',
         'markdown_inline',
+        'python',
+        'query',
+        'ssh_config',
+        'terraform',
+        'toml',
+        'typescript',
         'vim',
         'vimdoc',
-        'python',
-        'dockerfile',
-        'terraform',
         'yaml',
-        'toml',
-        'ssh_config',
-        'json',
-        'javascript',
-        'typescript',
-      },
-      -- Autoinstall languages that are not installed
-      auto_install = true,
-      highlight = {
-        enable = true,
-        -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-        --  If you are experiencing weird indenting issues, add the language to
-        --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
-      },
-      indent = { enable = true, disable = { 'ruby', 'yaml' } },
-    },
-    config = function(_, opts)
-      -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-
-      -- Prefer git instead of curl in order to improve connectivity in some environments
-      require('nvim-treesitter.install').prefer_git = true
-      ---@diagnostic disable-next-line: missing-fields
-      require('nvim-treesitter.configs').setup(opts)
-
-      -- There are additional nvim-treesitter modules that you can use to interact
-      -- with nvim-treesitter. You should go explore a few and see what interests you:
-      --
-      --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-      --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
-      --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+      }
+      require('nvim-treesitter').install(filetypes)
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = filetypes,
+        callback = function()
+          vim.treesitter.start()
+          vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+          vim.wo[0][0].foldmethod = 'expr'
+          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end,
+      })
     end,
   },
 
@@ -1232,17 +1225,22 @@ require('lazy').setup({
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug',
-  require 'kickstart.plugins.indent_line',
-  require 'kickstart.plugins.lint',
+  -- require 'kickstart.plugins.indent_line',
+  -- require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
-  require 'kickstart.plugins.neo-tree',
-  require 'kickstart.plugins.gitsigns',
-  require 'kickstart.plugins.fugitive',
-  require 'kickstart.plugins.tmux-navigator',
-  require 'kickstart.plugins.noice',
-  require 'kickstart.plugins.debug',
-  require 'kickstart.plugins.obsidian',
-  require 'kickstart.plugins.gitlinker',
+  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+
+  require 'custom.plugins.debug',
+  require 'custom.plugins.fugitive',
+  require 'custom.plugins.gitlinker',
+  require 'custom.plugins.indent_line',
+  require 'custom.plugins.lint',
+  require 'custom.plugins.neo-tree',
+  require 'custom.plugins.noice',
+  require 'custom.plugins.obsidian',
+  -- require 'custom.plugins.terragrunt-ls',
+  require 'custom.plugins.tmux-navigator',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
