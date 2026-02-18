@@ -964,6 +964,7 @@ require('lazy').setup({
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
         'prettierd',
+        'hclfmt',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -1033,11 +1034,22 @@ require('lazy').setup({
         typescript = { 'prettierd' },
         mjs = { 'prettierd' },
         javascriptreact = { 'prettierd' },
+        hcl = { 'hclfmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      },
+      formatters = {
+        -- terragrunt_hclfmt = {
+        --   command = 'terragrunt',
+        --   args = { 'hclfmt', '--terragrunt-hclfmt-file', '$FILENAME' },
+        --   stdin = false, -- hclfmt requires a file path
+        -- },
+        hclfmt = {
+          command = 'hclfmt',
+        },
       },
     },
   },
