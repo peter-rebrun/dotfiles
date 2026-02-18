@@ -19,3 +19,5 @@ wget
 zsh-autosuggestions
 zsh-syntax-highlighting
 go
+tree-sitter-cli
+curl

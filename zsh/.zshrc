@@ -60,7 +60,7 @@ zstyle ':omz:update' frequency 13
 # "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
 # or set a custom format using the strftime function format specifications,
 # see 'man strftime' for details.
-HIST_STAMPS="dd/mm/yyyy"
+HIST_STAMPS="dd.mm.yyyy"
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
@@ -138,12 +138,8 @@ compinit
 # End of Docker CLI completions
 export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 export PATH="$HOME/.ebcli-virtual-env/executables:$PATH"
+export PATH="/opt/homebrew/opt/curl/bin:$PATH"
+export PATH="/opt/homebrew/share/google-cloud-sdk/bin:$PATH"
 
-# bun completions
-[ -s "/Users/peter/.bun/_bun" ] && source "/Users/peter/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-source $HOME/.zsh_splose
+source $HOME/.splose-secrets
+source ~/.splose-secrets
