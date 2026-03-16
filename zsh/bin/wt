@@ -16,7 +16,7 @@ function wt {
       cd -- "$(get_bare_worktree_path)"  || return 1
       git worktree add "$@"
       cd "$1" || return 1
-      echo "Fetching canges"
+      echo "Fetching changes"
       git fetch --all || return 1
       # echo "Merging with master"
       # git merge origin/master || return 1
@@ -25,12 +25,28 @@ function wt {
       ;;
     remove)
       shift
-      if [[ "$1" == "--all" ]]; then
-        cd -- "$(get_bare_worktree_path)"  || return 1
-        for dir in $(git worktree list | grep -vE "\(bare\)|master|main" | awk '{ print $1 }'); do
-           git worktree remove "$dir"
+      local force=""
+      local all=false
+ 
+      # Parse flags for remove
+      while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+          --force|-f) force="--force" ;;
+          --all)      all=true ;;
+          *)          echo "Unknown option: $1"; return 1 ;;
+        esac
+        shift
+      done
+
+      if [ "$all" = true ]; then
+        cd -- "$(get_bare_worktree_path)" || return 1
+        # Loop through all worktrees except bare and main branches
+        for dir in $(git worktree list | grep -vE "\(bare\)|master|main" | awk '{ print $1 }')
+        do
+          echo "Removing worktree: $dir"
+          git worktree remove $force "$dir"
         done
-      elif [[ "$1" == "" ]]; then
+      else
         local dir
         dir=$(git worktree list | grep -v "(bare)" | fzf --tmux | awk '{ print $1 }')
         if [ -n "$dir" ]; then
@@ -38,10 +54,8 @@ function wt {
             cd -- "$(get_bare_worktree_path)" || return 1
           fi
           echo "Removing worktree: $dir"
-          git worktree remove "$dir"
+          git worktree remove $force "$dir"
         fi
-      else
-        echo "Usage: wt {list|add|remove|remove --all}"
       fi
       ;;
     "")
@@ -53,7 +67,7 @@ function wt {
       fi
       ;;
     *)
-      echo "Usage: wt {list|add|remove|remove --all}"
+      echo "Usage: wt {list|add|remove [--all] [--force]}"
       return 1
       ;;
   esac
