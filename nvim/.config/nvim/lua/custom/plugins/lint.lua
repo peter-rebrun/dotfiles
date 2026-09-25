@@ -12,7 +12,8 @@ return {
           ensure_installed = {
             'ruff',
             'mypy',
-            'tflint',
+            -- 'tflint',
+            'oxlint',
           },
         },
       },
@@ -35,7 +36,13 @@ return {
         -- markdown = { 'markdownlint' },
         -- markdown = { 'vale' },
         python = { 'ruff' },
-        terraform = { 'tflint' },
+        -- terraform = { 'tflint' },
+        javascript = { 'oxlint' },
+        typescript = { 'oxlint' },
+        javascriptreact = { 'oxlint' },
+        typescriptreact = { 'oxlint' },
+        json = { 'oxlint' },
+        jsonc = { 'oxlint' },
       }
 
       -- To allow other plugins to add linters to require('lint').linters_by_ft,
