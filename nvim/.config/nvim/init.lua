@@ -90,14 +90,6 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
--- Volta shims: GUI-launched nvim misses the interactive-zsh PATH, so node/pnpm
--- (and git hooks that need them) fail. The shim dir is static and resolves the
--- project-pinned toolchain at exec time, so prepending it once is enough.
-local volta_bin = vim.fn.expand '~/.volta/bin'
-if vim.fn.isdirectory(volta_bin) == 1 and not string.find(vim.env.PATH or '', volta_bin, 1, true) then
-  vim.env.PATH = volta_bin .. ':' .. vim.env.PATH
-end
-
 -- Disable NetRW - race condittion with nvim-tree
 -- vim.g.loaded_netrw = 1
 -- vim.g.loaded_netrwPlugin = 1
@@ -171,48 +163,18 @@ vim.o.inccommand = 'split'
 vim.o.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.o.scrolloff = 15
+vim.o.scrolloff = 10
 
 -- if performing an operation that would fail due to unsaved changes in the buffer (like `:q`),
 -- instead raise a dialog asking if you wish to save the current file(s)
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
--- [[ My Custom Settings ]]
---
-
--- size of a hard tabstop (ts).
-vim.o.tabstop = 2
-
--- size of an indentation (sw).
-vim.o.shiftwidth = 2
-
--- always uses spaces instead of tab characters (et).
-vim.o.expandtab = true
-
--- number of spaces a <Tab> counts for. When 0, feature is off (sts).
-vim.o.softtabstop = 2
-
--- Do not wrap text longer than screean size
-vim.o.wrap = false
-
-vim.filetype.add {
-  extension = {
-    tf = 'terraform',
-    tfvars = 'terraform', -- Also include .tfvars files for consistency
-  },
-}
-
--- Togle inline LSP diagnostics
-vim.keymap.set('n', '<leader>td', function()
-  vim.diagnostic.enable(not vim.diagnostic.is_enabled())
-end, { silent = true, noremap = true, desc = '[T]oggle [D]iagnostics' })
-
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
--- Set highlight on search, but clear on pressing <Esc> in normal mode
-vim.o.hlsearch = true
+-- Clear highlights on search when pressing <Esc> in normal mode
+--  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
@@ -244,30 +206,6 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
--- Split Tmux panes
-vim.keymap.set('n', '<leader>sth', '<cmd>silent !tmux split-window -h<CR>', { desc = '[S]plit [T]mux pane [H]orizontally' })
-vim.keymap.set('n', '<leader>stv', '<cmd>silent !tmux split-window -v<CR>', { desc = '[S]plit [T]mux pane [V]ertically' })
-
--- Better paste behavior
-vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without yanking' })
-
--- Delete without yanking
--- vim.keymap.set({ 'n', 'v' }, '<leader>d', '"_d', { desc = 'Delete without yanking' })
-
--- Splitting
-vim.keymap.set('n', '<leader>sh', ':vsplit<CR>', { desc = '[S]plit window [h]orizontally' })
-vim.keymap.set('n', '<leader>sv', ':split<CR>', { desc = '[S]plit window [v]ertically' })
-
--- Move lines up/down
-vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { desc = 'Move line down' })
-vim.keymap.set('n', '<A-k>', ':m .-2<CR>==', { desc = 'Move line up' })
-vim.keymap.set('v', '<A-j>', ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
-vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
-
--- Better indenting in visual mode
-vim.keymap.set('v', '<', '<gv', { desc = 'Indent left and reselect' })
-vim.keymap.set('v', '>', '>gv', { desc = 'Indent right and reselect' })
-
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -282,33 +220,8 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- When editing a file, always jump to the last known cursor position.
--- Don't do it when the position is invalid, when inside an event handler
--- (happens when dropping a file on gvim) and for a commit message (it's
--- likely a different one than last time).
-vim.api.nvim_create_autocmd('BufReadPost', {
-  group = vim.api.nvim_create_augroup('last-position', { clear = true }),
-  callback = function(args)
-    local valid_line = vim.fn.line [['"]] >= 1 and vim.fn.line [['"]] < vim.fn.line '$'
-    local not_commit = vim.b[args.buf].filetype ~= 'commit'
-
-    if valid_line and not_commit then
-      vim.cmd [[normal! g`"]]
-    end
-  end,
-})
-
--- Resize windows on the host window size change
-vim.api.nvim_create_autocmd('VimResized', {
-  group = vim.api.nvim_create_augroup('WinResize', { clear = true }),
-  pattern = '*',
-  command = 'wincmd =',
-  desc = 'Automatically resize windows when the host window size changes.',
-})
-
--- disable folding on startup
-vim.o.foldenable = false
-vim.o.foldlevel = 20
+-- CUSTOM: everything additive (options, keymaps, autocmds, PATH) lives in lua/custom/
+require 'custom'
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
@@ -367,39 +280,6 @@ require('lazy').setup({
   -- after the plugin has been loaded:
   --  config = function() ... end
 
-  -- { -- Useful plugin to show you pending keybinds.
-  --   'folke/which-key.nvim',
-  --   event = 'VimEnter', -- Sets the loading event to 'VimEnter'
-  --   config = function() -- This is the function that runs, AFTER loading
-  --     require('which-key').setup()
-  --
-  --     -- Document existing key chains
-  --     require('which-key').add {
-  --       { '<leader>c', group = '[C]ode' },
-  --       { '<leader>c_', hidden = true },
-  --       { '<leader>d', group = '[D]ocument' },
-  --       { '<leader>d_', hidden = true },
-  --       { '<leader>h', group = 'Git [H]unk' },
-  --       { '<leader>h_', hidden = true },
-  --       { '<leader>r', group = '[R]ename' },
-  --       { '<leader>r_', hidden = true },
-  --       { '<leader>s', group = '[S]earch/[S]plit' },
-  --       { '<leader>s_', hidden = true },
-  --       { '<leader>t', group = '[T]oggle' },
-  --       { '<leader>t_', hidden = true },
-  --       { '<leader>w', group = '[W]orkspace' },
-  --       { '<leader>w_', hidden = true },
-  --       { '<leader>p', group = 'Tmux [P]ane' },
-  --       { '<leader>p_', hidden = true },
-  --       { '<leader>g', group = '[G]it Link' },
-  --       { '<leader>g_', hidden = true },
-  --       { '<leader>o', group = '[O]bsidian' },
-  --       { '<leader>o_', hidden = true },
-  --     }
-  --     -- visual mode
-  --     require('which-key').add { '<leader>h', desc = 'Git [H]unk', mode = 'v' }
-  --   end,
-  -- },
   { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
     event = 'VimEnter', -- Sets the loading event to 'VimEnter'
@@ -452,6 +332,7 @@ require('lazy').setup({
         { '<leader>c', group = '[C]ode' },
         { '<leader>d', group = '[D]ocument' },
         { '<leader>r', group = '[R]ename' },
+        -- CUSTOM: renamed [S]earch group, [W]orkspace->Git [W]orktree, added g/o groups
         { '<leader>s', group = '[S]earch/[S]plit' },
         { '<leader>w', group = 'Git [W]orktree' },
         { '<leader>g', group = '[G]it Link' },
@@ -470,7 +351,7 @@ require('lazy').setup({
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
-    version = '*',
+    version = '*', -- CUSTOM: kickstart pins branch = '0.1.x'
     dependencies = {
       'nvim-lua/plenary.nvim',
       { -- If encountering errors, see telescope-fzf-native README for installation instructions
@@ -490,6 +371,7 @@ require('lazy').setup({
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
       { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+      -- CUSTOM: git-worktree.nvim dependency + its telescope extension/keymaps below
       {
         'ThePrimeagen/git-worktree.nvim',
         opt = {
@@ -532,6 +414,7 @@ require('lazy').setup({
         --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
         --   },
         -- },
+        -- CUSTOM: search hidden files in live_grep/find_files
         pickers = {
           live_grep = {
             additional_args = { '--hidden' },
@@ -554,6 +437,7 @@ require('lazy').setup({
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
+      -- CUSTOM: sh (help_tags) disabled — remapped to vsplit in lua/custom; sm added; sf includes hidden files
       -- vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sm', '<cmd>Telescope notify<cr>', { desc = '[S]earch [M]essages' })
@@ -595,7 +479,7 @@ require('lazy').setup({
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
 
-      -- Shortcuts for git-worktree
+      -- CUSTOM: Shortcuts for git-worktree
       vim.keymap.set(
         'n',
         '<leader>wa',
@@ -641,7 +525,7 @@ require('lazy').setup({
       -- Allows extra capabilities provided by blink.cmp
       'saghen/blink.cmp',
 
-      -- Json and Yaml schemas
+      -- CUSTOM: Json and Yaml schemas
       'b0o/schemastore.nvim',
     },
     config = function()
@@ -843,6 +727,9 @@ require('lazy').setup({
         --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
         --
         --  Feel free to add/remove any LSPs here that you want to install via Mason. They will automatically be installed and setup.
+        -- CUSTOM: server list diverges from kickstart — basedpyright, ruff, tofu_ls,
+        -- gh_actions_ls, ansiblels, dockerls, docker_compose, ts_ls, yamlls+schemastore,
+        -- jsonls+schemastore, bashls (kickstart ships only lua_ls)
         mason = {
           -- clangd = {},
           -- gopls = {},
@@ -983,8 +870,8 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers.mason or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
-        'oxfmt', -- Javascript, Typescript, JSON
-        'hclfmt',
+        'oxfmt', -- CUSTOM: Javascript, Typescript, JSON
+        'hclfmt', -- CUSTOM
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -1036,7 +923,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true, dockerfile = true, php = true }
+        local disable_filetypes = { c = true, cpp = true, dockerfile = true, php = true } -- CUSTOM: dockerfile, php added
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return nil
         else
@@ -1048,6 +935,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        -- CUSTOM: everything below lua is added (kickstart ships only lua/stylua)
         python = { 'ruff_fix', 'ruff_organize_imports', 'ruff_format' },
         terraform = { 'terraform_fmt' },
         javascript = { 'oxfmt' },
@@ -1065,6 +953,7 @@ require('lazy').setup({
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
+      -- CUSTOM: whole formatters table
       formatters = {
         -- terragrunt_hclfmt = {
         --   command = 'terragrunt',
@@ -1171,7 +1060,7 @@ require('lazy').setup({
     },
   },
 
-  require 'custom.plugins.catppuccin',
+  -- CUSTOM: kickstart's tokyonight colorscheme block is replaced by custom.plugins.catppuccin
 
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
@@ -1217,6 +1106,8 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     lazy = false,
     config = function()
+      -- CUSTOM: added dockerfile, javascript, json, python, ssh_config, terraform,
+      -- toml, typescript, yaml on top of kickstart's list
       local filetypes = {
         'bash',
         'c',
@@ -1268,23 +1159,12 @@ require('lazy').setup({
   -- require 'kickstart.plugins.neo-tree',
   require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
-  require 'custom.plugins.debug',
-  require 'custom.plugins.fugitive',
-  require 'custom.plugins.gitlinker',
-  require 'custom.plugins.indent_line',
-  require 'custom.plugins.lint',
-  require 'custom.plugins.neo-tree',
-  require 'custom.plugins.noice',
-  require 'custom.plugins.obsidian',
-  -- require 'custom.plugins.terragrunt-ls',
-  require 'custom.plugins.tmux-navigator',
-
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the

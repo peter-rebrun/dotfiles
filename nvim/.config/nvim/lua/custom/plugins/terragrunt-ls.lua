@@ -1,6 +1,8 @@
 return {
   {
     'gruntwork-io/terragrunt-ls',
+    -- Was disabled (commented out) when this dir was auto-imported; keep it off.
+    enabled = false,
     -- To use a local version of the Neovim plugin, you can use something like following:
     -- dir = vim.fn.expand '~/repos/src/github.com/gruntwork-io/terragrunt-ls',
     ft = 'hcl',
