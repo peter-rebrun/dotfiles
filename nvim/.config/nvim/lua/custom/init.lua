@@ -7,12 +7,13 @@
 
 -- [[ PATH ]]
 
--- Volta shims: GUI-launched nvim misses the interactive-zsh PATH, so node/pnpm
--- (and git hooks that need them) fail. The shim dir is static and resolves the
--- project-pinned toolchain at exec time, so prepending it once is enough.
-local volta_bin = vim.fn.expand '~/.volta/bin'
-if vim.fn.isdirectory(volta_bin) == 1 and not string.find(vim.env.PATH or '', volta_bin, 1, true) then
-  vim.env.PATH = volta_bin .. ':' .. vim.env.PATH
+-- GUI-launched nvim gets launchd's minimal PATH, not the interactive-zsh one, so
+-- tools like node/pnpm (Volta shims) and tofu/rg (Homebrew) go missing along with
+-- the git hooks and formatters that call them. Prepend the static dirs once.
+for _, dir in ipairs { '/opt/homebrew/bin', vim.fn.expand '~/.volta/bin' } do
+  if vim.fn.isdirectory(dir) == 1 and not string.find(vim.env.PATH or '', dir .. ':', 1, true) then
+    vim.env.PATH = dir .. ':' .. vim.env.PATH
+  end
 end
 
 -- [[ Options ]]

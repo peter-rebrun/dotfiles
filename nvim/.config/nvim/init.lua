@@ -963,6 +963,9 @@ require('lazy').setup({
         hclfmt = {
           command = 'hclfmt',
         },
+        terraform_fmt = {
+          command = 'tofu',
+        },
       },
     },
   },
