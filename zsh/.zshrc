@@ -116,8 +116,6 @@ alias ll="ls -lha"
 # alias cdc="cd ~/code"
 
 
-export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
 # Created by `pipx` on 2024-03-27 03:55:06
 export PATH="$PATH:$HOME/.local/bin"
@@ -147,3 +145,7 @@ source $HOME/.splose-secrets
 source ~/.splose-secrets
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 export AWS_PAGER=""
+
+# Volta must beat brew's node (kept for gemini-cli/prettierd); .zshenv prepends
+# it too early — .zprofile's brew shellenv would otherwise shadow it.
+export PATH="$HOME/.volta/bin:$PATH"

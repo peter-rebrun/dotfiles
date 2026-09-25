@@ -90,6 +90,14 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+-- Volta shims: GUI-launched nvim misses the interactive-zsh PATH, so node/pnpm
+-- (and git hooks that need them) fail. The shim dir is static and resolves the
+-- project-pinned toolchain at exec time, so prepending it once is enough.
+local volta_bin = vim.fn.expand '~/.volta/bin'
+if vim.fn.isdirectory(volta_bin) == 1 and not string.find(vim.env.PATH or '', volta_bin, 1, true) then
+  vim.env.PATH = volta_bin .. ':' .. vim.env.PATH
+end
+
 -- Disable NetRW - race condittion with nvim-tree
 -- vim.g.loaded_netrw = 1
 -- vim.g.loaded_netrwPlugin = 1
