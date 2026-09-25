@@ -1,97 +1,62 @@
-return {
-  { -- Linting
-    'mfussenegger/nvim-lint',
-    dependencies = {
-      'mason-org/mason.nvim',
-      {
-        'rshkarin/mason-nvim-lint',
-        opts = {
-          automatic_installation = true,
-          -- Optional: list of linters to ensure are installed immediately upon startup.
-          -- These names must match the mason registry names.
-          ensure_installed = {
-            'ruff',
-            'mypy',
-            -- 'tflint',
-            'oxlint',
-          },
-        },
-      },
-    },
-    event = { 'BufReadPre', 'BufNewFile' },
-    config = function()
-      local lint = require 'lint'
-      local mypy = require('lint').linters.mypy
-      mypy.args = {
-        '--show-column-numbers',
-        '--show-error-end',
-        '--hide-error-codes',
-        '--hide-error-context',
-        '--no-color-output',
-        '--no-error-summary',
-        '--no-pretty',
-        '--python-executable .venv/bin/python',
-      }
-      lint.linters_by_ft = {
-        -- markdown = { 'markdownlint' },
-        -- markdown = { 'vale' },
-        python = { 'ruff' },
-        -- terraform = { 'tflint' },
-        javascript = { 'oxlint' },
-        typescript = { 'oxlint' },
-        javascriptreact = { 'oxlint' },
-        typescriptreact = { 'oxlint' },
-        json = { 'oxlint' },
-        jsonc = { 'oxlint' },
-      }
+-- Linting (ruff/mypy for Python, oxlint for JS/TS/JSON)
+-- mason itself is set up in init.lua's LSP section, which runs before this file.
+vim.pack.add {
+  'https://github.com/mfussenegger/nvim-lint',
+  'https://github.com/rshkarin/mason-nvim-lint',
+}
 
-      -- To allow other plugins to add linters to require('lint').linters_by_ft,
-      -- instead set linters_by_ft like this:
-      -- lint.linters_by_ft = lint.linters_by_ft or {}
-      -- lint.linters_by_ft['markdown'] = { 'markdownlint' }
-      --
-      -- However, note that this will enable a set of default linters,
-      -- which will cause errors unless these tools are available:
-      -- {
-      --   clojure = { "clj-kondo" },
-      --   dockerfile = { "hadolint" },
-      --   inko = { "inko" },
-      --   janet = { "janet" },
-      --   json = { "jsonlint" },
-      --   markdown = { "vale" },
-      --   rst = { "vale" },
-      --   ruby = { "ruby" },
-      --   terraform = { "tflint" },
-      --   text = { "vale" }
-      -- }
-      --
-      -- You can disable the default linters by setting their filetypes to nil:
-      -- lint.linters_by_ft['clojure'] = nil
-      -- lint.linters_by_ft['dockerfile'] = nil
-      -- lint.linters_by_ft['inko'] = nil
-      -- lint.linters_by_ft['janet'] = nil
-      -- lint.linters_by_ft['json'] = nil
-      -- lint.linters_by_ft['markdown'] = nil
-      -- lint.linters_by_ft['rst'] = nil
-      -- lint.linters_by_ft['ruby'] = nil
-      -- lint.linters_by_ft['terraform'] = nil
-      -- lint.linters_by_ft['text'] = nil
+local lint = require 'lint'
 
-      -- Create autocommand which carries out the actual linting
-      -- on the specified events.
-      local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
-      vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost', 'InsertLeave' }, {
-        group = lint_augroup,
-        callback = function()
-          -- Only run the linter in buffers that you can modify in order to
-          -- avoid superfluous noise, notably within the handy LSP pop-ups that
-          -- describe the hovered symbol using Markdown.
-          if vim.bo.modifiable then
-            lint.try_lint()
-          end
-          require('lint').try_lint()
-        end,
-      })
-    end,
+local mypy = lint.linters.mypy
+mypy.args = {
+  '--show-column-numbers',
+  '--show-error-end',
+  '--hide-error-codes',
+  '--hide-error-context',
+  '--no-color-output',
+  '--no-error-summary',
+  '--no-pretty',
+  '--python-executable .venv/bin/python',
+}
+
+lint.linters_by_ft = {
+  -- markdown = { 'markdownlint' },
+  -- markdown = { 'vale' },
+  python = { 'ruff' },
+  -- terraform = { 'tflint' },
+  javascript = { 'oxlint' },
+  typescript = { 'oxlint' },
+  javascriptreact = { 'oxlint' },
+  typescriptreact = { 'oxlint' },
+  json = { 'oxlint' },
+  jsonc = { 'oxlint' },
+}
+
+-- Installs the linters above via mason. Must be set up after mason and after
+-- linters_by_ft so its auto-discovery sees the full list.
+require('mason-nvim-lint').setup {
+  automatic_installation = true,
+  -- Optional: list of linters to ensure are installed immediately upon startup.
+  -- These names must match the mason registry names.
+  ensure_installed = {
+    'ruff',
+    'mypy',
+    -- 'tflint',
+    'oxlint',
   },
 }
+
+-- Create autocommand which carries out the actual linting
+-- on the specified events.
+local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
+vim.api.nvim_create_autocmd({ 'BufEnter', 'BufWritePost', 'InsertLeave' }, {
+  group = lint_augroup,
+  callback = function()
+    -- Only run the linter in buffers that you can modify in order to
+    -- avoid superfluous noise, notably within the handy LSP pop-ups that
+    -- describe the hovered symbol using Markdown.
+    if vim.bo.modifiable then
+      lint.try_lint()
+    end
+  end,
+})

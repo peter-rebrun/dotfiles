@@ -48,7 +48,24 @@ vim.filetype.add {
     tf = 'terraform',
     tfvars = 'terraform', -- Also include .tfvars files for consistency
   },
+  -- ansiblels only attaches to the 'yaml.ansible' filetype, which nothing
+  -- produces by default — mark yaml in ansible-shaped paths as ansible.
+  pattern = {
+    ['.*/playbooks/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/roles/.*/tasks/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/roles/.*/handlers/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/group_vars/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/host_vars/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/molecule/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*ansible.*/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/playbook%.ya?ml'] = 'yaml.ansible',
+    ['.*/site%.ya?ml'] = 'yaml.ansible',
+  },
 }
+
+-- 'yaml.ansible' has no treesitter parser of its own — reuse the yaml one
+-- so highlighting keeps working for ansible files.
+vim.treesitter.language.register('yaml', 'yaml.ansible')
 
 -- [[ Keymaps ]]
 
@@ -68,8 +85,8 @@ vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without yanking' })
 -- vim.keymap.set({ 'n', 'v' }, '<leader>d', '"_d', { desc = 'Delete without yanking' })
 
 -- Splitting
-vim.keymap.set('n', '<leader>sh', ':vsplit<CR>', { desc = '[S]plit window [h]orizontally' })
-vim.keymap.set('n', '<leader>sv', ':split<CR>', { desc = '[S]plit window [v]ertically' })
+vim.keymap.set('n', '<leader>swh', ':vsplit<CR>', { desc = '[S]plit [W]indow [H]orizontally' })
+vim.keymap.set('n', '<leader>swv', ':split<CR>', { desc = '[S]plit [W]indow [V]ertically' })
 
 -- Move lines up/down
 vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { desc = 'Move line down' })
