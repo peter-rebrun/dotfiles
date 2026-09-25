@@ -247,8 +247,8 @@ vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without yanking' })
 -- vim.keymap.set({ 'n', 'v' }, '<leader>d', '"_d', { desc = 'Delete without yanking' })
 
 -- Splitting
-vim.keymap.set('n', '<leader>sv', ':vsplit<CR>', { desc = '[S]plit window [v]ertically' })
-vim.keymap.set('n', '<leader>sh', ':split<CR>', { desc = '[S]plit window [h]orizontally' })
+vim.keymap.set('n', '<leader>sh', ':vsplit<CR>', { desc = '[S]plit window [h]orizontally' })
+vim.keymap.set('n', '<leader>sv', ':split<CR>', { desc = '[S]plit window [v]ertically' })
 
 -- Move lines up/down
 vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { desc = 'Move line down' })
@@ -903,7 +903,15 @@ require('lazy').setup({
               },
             },
           },
-          terraformls = {
+          -- terraformls = {
+          --   initializationOptions = {
+          --     indexing = {
+          --       ignoreDirectoryNames = { '.terraform' },
+          --       ignorePaths = { '.terraform' },
+          --     },
+          --   },
+          -- },
+          tofu_ls = {
             initializationOptions = {
               indexing = {
                 ignoreDirectoryNames = { '.terraform' },
@@ -911,6 +919,7 @@ require('lazy').setup({
               },
             },
           },
+          gh_actions_ls = {},
           ansiblels = {},
           dockerls = {},
           docker_compose_language_service = {},
@@ -918,6 +927,10 @@ require('lazy').setup({
           yamlls = {
             settings = {
               yaml = {
+                format = {
+                  enable = true,
+                  singleQuote = true,
+                },
                 schemaStore = {
                   -- You must disable built-in schemaStore support if you want to use
                   -- this plugin and its advanced options like `ignore`.
@@ -938,7 +951,6 @@ require('lazy').setup({
             },
           },
           bashls = {},
-          intelephense = {},
         },
         -- This table contains config for all language servers that are *not* installed via Mason.
         -- Structure is identical to the mason table from above.
@@ -963,7 +975,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers.mason or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
-        'prettierd',
+        'oxfmt', -- Javascript, Typescript, JSON
         'hclfmt',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -1030,10 +1042,14 @@ require('lazy').setup({
         lua = { 'stylua' },
         python = { 'ruff_fix', 'ruff_organize_imports', 'ruff_format' },
         terraform = { 'terraform_fmt' },
-        javascript = { 'prettierd' },
-        typescript = { 'prettierd' },
-        mjs = { 'prettierd' },
-        javascriptreact = { 'prettierd' },
+        javascript = { 'oxfmt' },
+        typescript = { 'oxfmt' },
+        javascriptreact = { 'oxfmt' },
+        typescriptreact = { 'oxfmt' },
+        json = { 'oxfmt' },
+        jsonc = { 'oxfmt' },
+        yaml = { 'oxfmt' },
+        mjs = { 'oxfmt' },
         hcl = { 'hclfmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
