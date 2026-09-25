@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+c() { cd ~/code/"${1:-}"; }
+compdef '_files -W ~/code -/' c

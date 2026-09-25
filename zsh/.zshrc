@@ -113,6 +113,7 @@ alias vim="nvim"
 alias ls="eza --icons=always --group-directories-first"
 alias l="ls -lh"
 alias ll="ls -lha"
+# alias cdc="cd ~/code"
 
 
 export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
@@ -128,6 +129,7 @@ export FZF_TMUX_OPTS="-p"
 
 # Import functions to mange git worktrees
 source $HOME/bin/wt
+source $HOME/bin/c
 
 eval "$(starship init zsh)"
 
@@ -143,3 +145,5 @@ export PATH="/opt/homebrew/share/google-cloud-sdk/bin:$PATH"
 
 source $HOME/.splose-secrets
 source ~/.splose-secrets
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+export AWS_PAGER=""
