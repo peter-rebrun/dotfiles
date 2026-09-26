@@ -20,10 +20,10 @@ mypy.args = {
 }
 
 lint.linters_by_ft = {
-  -- markdown = { 'markdownlint' },
+  markdown = { 'markdownlint' },
   -- markdown = { 'vale' },
   python = { 'ruff' },
-  -- terraform = { 'tflint' },
+  terraform = { 'tflint' },
   javascript = { 'oxlint' },
   typescript = { 'oxlint' },
   javascriptreact = { 'oxlint' },
@@ -41,8 +41,9 @@ require('mason-nvim-lint').setup {
   ensure_installed = {
     'ruff',
     'mypy',
-    -- 'tflint',
+    'tflint',
     'oxlint',
+    'markdownlint',
   },
 }
 

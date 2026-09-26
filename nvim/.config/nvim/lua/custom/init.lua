@@ -43,14 +43,27 @@ vim.o.hlsearch = true
 vim.o.foldenable = false
 vim.o.foldlevel = 20
 
+-- Several language servers only attach to specialised filetypes that nothing
+-- produces by default (ansiblels -> yaml.ansible, docker_compose_language_service
+-- -> yaml.docker-compose, yamlls dialects, tofu_ls -> opentofu). Teach Neovim
+-- to detect them so those servers actually start.
 vim.filetype.add {
   extension = {
     tf = 'terraform',
     tfvars = 'terraform', -- Also include .tfvars files for consistency
+    tofu = 'opentofu',
+    tofuvars = 'opentofu-vars',
   },
-  -- ansiblels only attaches to the 'yaml.ansible' filetype, which nothing
-  -- produces by default — mark yaml in ansible-shaped paths as ansible.
+  filename = {
+    ['docker-compose.yml'] = 'yaml.docker-compose',
+    ['docker-compose.yaml'] = 'yaml.docker-compose',
+    ['compose.yml'] = 'yaml.docker-compose',
+    ['compose.yaml'] = 'yaml.docker-compose',
+    ['.gitlab-ci.yml'] = 'yaml.gitlab',
+    ['.gitlab-ci.yaml'] = 'yaml.gitlab',
+  },
   pattern = {
+    -- ansible
     ['.*/playbooks/.*%.ya?ml'] = 'yaml.ansible',
     ['.*/roles/.*/tasks/.*%.ya?ml'] = 'yaml.ansible',
     ['.*/roles/.*/handlers/.*%.ya?ml'] = 'yaml.ansible',
@@ -60,12 +73,21 @@ vim.filetype.add {
     ['.*ansible.*/.*%.ya?ml'] = 'yaml.ansible',
     ['.*/playbook%.ya?ml'] = 'yaml.ansible',
     ['.*/site%.ya?ml'] = 'yaml.ansible',
+    -- docker compose variants like docker-compose.override.yml
+    ['.*/docker%-compose%..*%.ya?ml'] = 'yaml.docker-compose',
+    ['.*/compose%..*%.ya?ml'] = 'yaml.docker-compose',
+    -- gitlab CI includes like .gitlab/ci/*.yml
+    ['.*/%.gitlab/.*%.ya?ml'] = 'yaml.gitlab',
+    -- helm values files inside a chart
+    ['.*/charts?/.*/values.*%.ya?ml'] = 'yaml.helm-values',
+    ['.*/helm/.*/values.*%.ya?ml'] = 'yaml.helm-values',
   },
 }
 
--- 'yaml.ansible' has no treesitter parser of its own — reuse the yaml one
--- so highlighting keeps working for ansible files.
-vim.treesitter.language.register('yaml', 'yaml.ansible')
+-- The specialised filetypes have no treesitter parsers of their own — reuse
+-- the base ones so highlighting keeps working.
+vim.treesitter.language.register('yaml', { 'yaml.ansible', 'yaml.docker-compose', 'yaml.gitlab', 'yaml.helm-values' })
+vim.treesitter.language.register('terraform', { 'opentofu', 'opentofu-vars' })
 
 -- [[ Keymaps ]]
 
