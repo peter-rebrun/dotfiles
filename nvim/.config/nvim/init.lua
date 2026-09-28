@@ -839,6 +839,15 @@ do
           ignorePaths = { '.terraform' },
         },
       },
+      -- Never attach to non-file buffers (fugitive:// diff revisions etc.):
+      -- tofu-ls panics on non-file URIs (MustParseURI), killing the server.
+      root_dir = function(bufnr, on_dir)
+        local name = vim.api.nvim_buf_get_name(bufnr)
+        if name == '' or name:sub(1, 1) ~= '/' then
+          return
+        end
+        on_dir(vim.fs.root(bufnr, { '.terraform', '.git' }) or vim.fs.dirname(name))
+      end,
     },
     gh_actions_ls = {},
     ansiblels = {},
@@ -1128,8 +1137,11 @@ do
 
     -- Enable treesitter based folds
     -- For more info on folds see `:help folds`
-    -- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-    -- vim.wo.foldmethod = 'expr'
+    -- CUSTOM: enabled (kickstart ships these commented); buffer-scoped so the
+    -- setting doesn't leak to other buffers in the same window. Folds start
+    -- open via foldenable=false / foldlevel=20 in lua/custom/init.lua.
+    vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+    vim.wo[0][0].foldmethod = 'expr'
 
     -- Check if treesitter indentation is available for this language, and if so enable it
     -- in case there is no indent query, the indentexpr will fallback to the vim's built in one
