@@ -145,3 +145,22 @@ vim.api.nvim_create_autocmd('VimResized', {
   command = 'wincmd =',
   desc = 'Automatically resize windows when the host window size changes.',
 })
+
+-- Pick up files changed outside nvim (git, agents, other editors): autoread
+-- only acts when a timestamp check runs, so trigger checktime ourselves.
+-- FocusGained needs `focus-events on` in tmux to fire inside tmux.
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermLeave' }, {
+  group = vim.api.nvim_create_augroup('AutoreadCheck', { clear = true }),
+  callback = function()
+    if vim.bo.buftype == '' then
+      vim.cmd 'checktime'
+    end
+  end,
+  desc = 'Check for external file changes',
+})
+vim.api.nvim_create_autocmd('FileChangedShellPost', {
+  group = vim.api.nvim_create_augroup('AutoreadNotify', { clear = true }),
+  callback = function()
+    vim.notify('File changed on disk, buffer reloaded', vim.log.levels.INFO)
+  end,
+})
