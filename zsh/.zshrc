@@ -123,6 +123,12 @@ export PATH="$PATH:$HOME/.local/bin"
 # Set up fzf key bindings and fuzzy completion
 FZF_CTRL_T_COMMAND= source <(fzf --zsh)
 # export FZF_CTRL_R_OPTS="--reverse"
+# fzf >=0.74 renders multi-line history entries expanded and rebound ctrl-/ to
+# toggle-wrap-word; show one line per entry and fold/unfold with ctrl-/ instead.
+export FZF_CTRL_R_OPTS="--no-multi-line --bind 'ctrl-/:toggle-multi-line'"
+# Alt-C directory widget: tree preview of the highlighted directory,
+# hidden files included but VCS/dependency/cache dirs pruned
+export FZF_ALT_C_OPTS="--preview 'eza --tree --all --level=2 --color=always --ignore-glob=\".git|node_modules|.terraform|.venv|__pycache__|.cache|.turbo|.pytest_cache|.DS_Store\" {}'"
 export FZF_TMUX_OPTS="-p"
 
 # Import functions to mange git worktrees

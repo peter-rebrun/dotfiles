@@ -43,12 +43,51 @@ vim.o.hlsearch = true
 vim.o.foldenable = false
 vim.o.foldlevel = 20
 
+-- Several language servers only attach to specialised filetypes that nothing
+-- produces by default (ansiblels -> yaml.ansible, docker_compose_language_service
+-- -> yaml.docker-compose, yamlls dialects, tofu_ls -> opentofu). Teach Neovim
+-- to detect them so those servers actually start.
 vim.filetype.add {
   extension = {
     tf = 'terraform',
     tfvars = 'terraform', -- Also include .tfvars files for consistency
+    tofu = 'opentofu',
+    tofuvars = 'opentofu-vars',
+  },
+  filename = {
+    ['docker-compose.yml'] = 'yaml.docker-compose',
+    ['docker-compose.yaml'] = 'yaml.docker-compose',
+    ['compose.yml'] = 'yaml.docker-compose',
+    ['compose.yaml'] = 'yaml.docker-compose',
+    ['.gitlab-ci.yml'] = 'yaml.gitlab',
+    ['.gitlab-ci.yaml'] = 'yaml.gitlab',
+  },
+  pattern = {
+    -- ansible
+    ['.*/playbooks/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/roles/.*/tasks/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/roles/.*/handlers/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/group_vars/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/host_vars/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/molecule/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*ansible.*/.*%.ya?ml'] = 'yaml.ansible',
+    ['.*/playbook%.ya?ml'] = 'yaml.ansible',
+    ['.*/site%.ya?ml'] = 'yaml.ansible',
+    -- docker compose variants like docker-compose.override.yml
+    ['.*/docker%-compose%..*%.ya?ml'] = 'yaml.docker-compose',
+    ['.*/compose%..*%.ya?ml'] = 'yaml.docker-compose',
+    -- gitlab CI includes like .gitlab/ci/*.yml
+    ['.*/%.gitlab/.*%.ya?ml'] = 'yaml.gitlab',
+    -- helm values files inside a chart
+    ['.*/charts?/.*/values.*%.ya?ml'] = 'yaml.helm-values',
+    ['.*/helm/.*/values.*%.ya?ml'] = 'yaml.helm-values',
   },
 }
+
+-- The specialised filetypes have no treesitter parsers of their own — reuse
+-- the base ones so highlighting keeps working.
+vim.treesitter.language.register('yaml', { 'yaml.ansible', 'yaml.docker-compose', 'yaml.gitlab', 'yaml.helm-values' })
+vim.treesitter.language.register('terraform', { 'opentofu', 'opentofu-vars' })
 
 -- [[ Keymaps ]]
 
@@ -68,8 +107,8 @@ vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without yanking' })
 -- vim.keymap.set({ 'n', 'v' }, '<leader>d', '"_d', { desc = 'Delete without yanking' })
 
 -- Splitting
-vim.keymap.set('n', '<leader>sh', ':vsplit<CR>', { desc = '[S]plit window [h]orizontally' })
-vim.keymap.set('n', '<leader>sv', ':split<CR>', { desc = '[S]plit window [v]ertically' })
+vim.keymap.set('n', '<leader>swh', ':vsplit<CR>', { desc = '[S]plit [W]indow [H]orizontally' })
+vim.keymap.set('n', '<leader>swv', ':split<CR>', { desc = '[S]plit [W]indow [V]ertically' })
 
 -- Move lines up/down
 vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { desc = 'Move line down' })
@@ -105,4 +144,23 @@ vim.api.nvim_create_autocmd('VimResized', {
   pattern = '*',
   command = 'wincmd =',
   desc = 'Automatically resize windows when the host window size changes.',
+})
+
+-- Pick up files changed outside nvim (git, agents, other editors): autoread
+-- only acts when a timestamp check runs, so trigger checktime ourselves.
+-- FocusGained needs `focus-events on` in tmux to fire inside tmux.
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermLeave' }, {
+  group = vim.api.nvim_create_augroup('AutoreadCheck', { clear = true }),
+  callback = function()
+    if vim.bo.buftype == '' then
+      vim.cmd 'checktime'
+    end
+  end,
+  desc = 'Check for external file changes',
+})
+vim.api.nvim_create_autocmd('FileChangedShellPost', {
+  group = vim.api.nvim_create_augroup('AutoreadNotify', { clear = true }),
+  callback = function()
+    vim.notify('File changed on disk, buffer reloaded', vim.log.levels.INFO)
+  end,
 })
