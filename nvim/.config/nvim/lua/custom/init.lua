@@ -96,6 +96,13 @@ vim.keymap.set('n', '<leader>td', function()
   vim.diagnostic.enable(not vim.diagnostic.is_enabled())
 end, { silent = true, noremap = true, desc = '[T]oggle [D]iagnostics' })
 
+-- Open the diagnostic float; press again (or after [d/]d auto-float) to focus
+-- it, so the text can be yanked. q closes it. cursor scope matches the
+-- auto-float from jump.on_jump in init.lua, so the second press reuses it.
+vim.keymap.set('n', '<leader>e', function()
+  vim.diagnostic.open_float { scope = 'cursor' }
+end, { desc = 'Show diagnostic [E]rror float (again to focus)' })
+
 -- Split Tmux panes
 vim.keymap.set('n', '<leader>sth', '<cmd>silent !tmux split-window -h<CR>', { desc = '[S]plit [T]mux pane [H]orizontally' })
 vim.keymap.set('n', '<leader>stv', '<cmd>silent !tmux split-window -v<CR>', { desc = '[S]plit [T]mux pane [V]ertically' })
@@ -119,6 +126,18 @@ vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
 -- Better indenting in visual mode
 vim.keymap.set('v', '<', '<gv', { desc = 'Indent left and reselect' })
 vim.keymap.set('v', '>', '>gv', { desc = 'Indent right and reselect' })
+
+-- gq/gw wrap markdown at the same width markdownlint enforces (no md formatter
+-- in conform; formatoptions lack 't' so this never auto-wraps while typing).
+-- NOTE: gq does not understand code blocks or tables — avoid running it over
+-- them (markdownlint won't flag their length either way).
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('MarkdownTextwidth', { clear = true }),
+  pattern = 'markdown',
+  callback = function()
+    vim.bo.textwidth = 100
+  end,
+})
 
 -- [[ Autocommands ]]
 

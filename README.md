@@ -7,7 +7,7 @@ Personal configs, managed with [GNU Stow](https://www.gnu.org/software/stow/).
 Each top-level directory is a stow *package* mirroring the paths of its files
 relative to `$HOME`:
 
-```
+```text
 nvim/.config/nvim/...      -> ~/.config/nvim/...
 zsh/.zshrc, .zprofile, ...  -> ~/.zshrc, ~/.zprofile, ~/.oh-my-zsh (submodule), ~/bin/{c,connect,wt}
 tmux/.tmux.conf            -> ~/.tmux.conf
@@ -86,7 +86,7 @@ Never edit it by hand.
 
 To upgrade:
 
-```
+```lua
 :lua vim.pack.update()                        -- all plugins, confirmation buffer
 :lua vim.pack.update({ 'noice.nvim' })        -- one plugin
 :lua vim.pack.update(nil, { offline = true }) -- preview pending updates, no fetch
