@@ -39,7 +39,6 @@ alias vim="nvim"
 alias ls="eza --icons=always --group-directories-first"
 alias l="ls -lh"
 alias ll="ls -lha"
-# alias cdc="cd ~/code"
 
 # Created by `pipx` on 2024-03-27 03:55:06
 export PATH="$PATH:$HOME/.local/bin"
@@ -67,6 +66,7 @@ export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
 source $HOME/.splose-secrets
 export AWS_PAGER=""
+export EDITOR=vim
 
 # Volta must beat brew's node (kept for gemini-cli/prettierd); .zshenv prepends
 # it too early — .zprofile's brew shellenv would otherwise shadow it.

@@ -139,6 +139,27 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- In the fugitive status buffer, <CR> on a STAGED file opens the read-only
+-- index object (fugitive:///...//0/...) by design. Override: file lines open
+-- the work-tree file; anything else replays fugitive's original mapping.
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('FugitiveWorktreeCR', { clear = true }),
+  pattern = 'fugitive',
+  callback = function(ev)
+    local orig = vim.fn.maparg('<CR>', 'n', false, true)
+    vim.keymap.set('n', '<CR>', function()
+      local path = vim.api.nvim_get_current_line():match '^[MADRCU?! ][MADRCU?! ]?%s+(.+)$'
+      local file = path and vim.fn.FugitiveFind(path) or ''
+      if path and vim.fn.filereadable(file) == 1 then
+        vim.cmd.edit(vim.fn.fnameescape(file))
+      elseif orig and orig.rhs then
+        local keys = orig.rhs:gsub('<SID>', '<SNR>' .. orig.sid .. '_')
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, true, true), 'n', false)
+      end
+    end, { buffer = ev.buf, desc = 'Open work-tree file (fugitive object on non-file lines)' })
+  end,
+})
+
 -- [[ Autocommands ]]
 
 -- When editing a file, always jump to the last known cursor position.
