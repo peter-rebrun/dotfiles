@@ -66,7 +66,7 @@ export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
 source $HOME/.splose-secrets
 export AWS_PAGER=""
-export EDITOR=vim
+export EDITOR=nvim
 
 # Volta must beat brew's node (kept for gemini-cli/prettierd); .zshenv prepends
 # it too early — .zprofile's brew shellenv would otherwise shadow it.
