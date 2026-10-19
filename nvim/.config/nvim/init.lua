@@ -372,6 +372,7 @@ do
   vim.pack.add { gh 'lewis6991/gitsigns.nvim' }
   local gitsigns = require 'gitsigns'
   gitsigns.setup {
+    word_diff = true, -- CUSTOM: highlight intra-line changes; <leader>tW toggles it off
     signs = {
       add = { text = '+' }, ---@diagnostic disable-line: missing-fields
       change = { text = '~' }, ---@diagnostic disable-line: missing-fields
@@ -425,7 +426,8 @@ do
       vim.keymap.set('n', '<leader>hq', gitsigns.setqflist, { desc = 'git hunk [q]uickfix list (all changes in this file)', buf = bufnr })
       -- Toggles
       vim.keymap.set('n', '<leader>tb', gitsigns.toggle_current_line_blame, { desc = '[T]oggle git show [b]lame line', buf = bufnr })
-      vim.keymap.set('n', '<leader>tw', gitsigns.toggle_word_diff, { desc = '[T]oggle git intra-line [w]ord diff', buf = bufnr })
+      -- CUSTOM: tW, not kickstart's tw — <leader>tw is the global wrap toggle
+      vim.keymap.set('n', '<leader>tW', gitsigns.toggle_word_diff, { desc = '[T]oggle git intra-line [W]ord diff', buf = bufnr })
       -- Text object
       vim.keymap.set({ 'o', 'x' }, 'ih', gitsigns.select_hunk, { desc = 'text object [i]nside [h]unk', buf = bufnr })
     end,

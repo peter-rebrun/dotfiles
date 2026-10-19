@@ -33,6 +33,12 @@ vim.o.softtabstop = 2
 -- Do not wrap text longer than screean size
 vim.o.wrap = false
 
+-- When wrapping is toggled on (<leader>tw): visual-only wrap that never splits
+-- words; continuation lines keep the indent (breakindent, set above by
+-- kickstart) and start with a marker so they are easy to spot.
+vim.o.linebreak = true
+vim.opt.showbreak = '↳ '
+
 -- Minimal number of screen lines to keep above and below the cursor (kickstart uses 10).
 vim.o.scrolloff = 15
 
@@ -113,9 +119,14 @@ vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without yanking' })
 -- Delete without yanking
 -- vim.keymap.set({ 'n', 'v' }, '<leader>d', '"_d', { desc = 'Delete without yanking' })
 
--- Splitting
-vim.keymap.set('n', '<leader>swh', ':vsplit<CR>', { desc = '[S]plit [W]indow [H]orizontally' })
-vim.keymap.set('n', '<leader>swv', ':split<CR>', { desc = '[S]plit [W]indow [V]ertically' })
+-- Splitting (sv, not sw: <leader>sw is telescope's [S]earch current [W]ord)
+vim.keymap.set('n', '<leader>svh', ':vsplit<CR>', { desc = '[S]plit [V]im [H]orizontally' })
+vim.keymap.set('n', '<leader>svv', ':split<CR>', { desc = '[S]plit [V]im [V]ertically' })
+
+-- Toggle visual line wrapping (window-local; see linebreak/showbreak above)
+vim.keymap.set('n', '<leader>tw', function()
+  vim.wo.wrap = not vim.wo.wrap
+end, { desc = '[T]oggle [W]rapping' })
 
 -- Move lines up/down
 vim.keymap.set('n', '<A-j>', ':m .+1<CR>==', { desc = 'Move line down' })
