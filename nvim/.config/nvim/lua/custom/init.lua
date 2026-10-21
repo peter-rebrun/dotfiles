@@ -162,6 +162,23 @@ vim.api.nvim_create_autocmd('FileType', {
       local path = vim.api.nvim_get_current_line():match '^[MADRCU?! ][MADRCU?! ]?%s+(.+)$'
       local file = path and vim.fn.FugitiveFind(path) or ''
       if path and vim.fn.filereadable(file) == 1 then
+        -- Open where fugitive's native <CR> would: a window already showing
+        -- the file, else the window :G was run from — not the status pane.
+        local buf = vim.fn.bufnr(file)
+        local target
+        if buf ~= -1 then
+          for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            if vim.api.nvim_win_get_buf(w) == buf then
+              target = w
+              break
+            end
+          end
+        end
+        if target then
+          vim.api.nvim_set_current_win(target)
+        else
+          vim.cmd.wincmd 'p'
+        end
         vim.cmd.edit(vim.fn.fnameescape(file))
       elseif orig and orig.rhs then
         local keys = orig.rhs:gsub('<SID>', '<SNR>' .. orig.sid .. '_')
