@@ -573,9 +573,13 @@ do
     --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
     --   },
     -- },
-    -- CUSTOM: search hidden files in live_grep/find_files
+    -- CUSTOM: search hidden files in live_grep/grep_string/find_files
+    -- (.infrastructure/ is a hidden dir — without --hidden, rg skips it)
     pickers = {
       live_grep = {
+        additional_args = { '--hidden' },
+      },
+      grep_string = {
         additional_args = { '--hidden' },
       },
       find_files = {
