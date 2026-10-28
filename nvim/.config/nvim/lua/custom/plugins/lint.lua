@@ -1,4 +1,4 @@
--- Linting (ruff/mypy for Python, oxlint for JS/TS/JSON)
+-- Linting (ruff/mypy for Python, oxlint for JS/TS/JSON, swiftlint for Swift)
 -- mason itself is set up in init.lua's LSP section, which runs before this file.
 vim.pack.add {
   'https://github.com/mfussenegger/nvim-lint',
@@ -41,6 +41,7 @@ lint.linters_by_ft = {
   typescriptreact = { 'oxlint' },
   json = { 'oxlint' },
   jsonc = { 'oxlint' },
+  swift = { 'swiftlint' },
 }
 
 -- Installs the linters above via mason. Must be set up after mason and after
@@ -58,6 +59,7 @@ require('mason-nvim-lint').setup {
     'tflint',
     'oxlint',
     'markdownlint',
+    'swiftlint',
   },
 }
 

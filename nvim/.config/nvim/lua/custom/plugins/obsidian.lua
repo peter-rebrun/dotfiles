@@ -14,6 +14,10 @@ require('obsidian').setup {
       name = 'WorkNotes',
       path = '~/WorkNotes/WorkNotes',
     },
+    {
+      name = 'Notes',
+      path = '~/WorkNotes',
+    },
   },
   daily_notes = {
     folder = '03_Periodic/Daily',

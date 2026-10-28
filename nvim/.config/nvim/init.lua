@@ -452,6 +452,7 @@ do
       { '<leader>w', group = 'Git [W]orktree' },
       { '<leader>g', group = '[G]it Link' },
       { '<leader>o', group = '[O]bsidian' },
+      { '<leader>x', group = '[X]code' },
     },
   }
 
@@ -952,6 +953,8 @@ do
     -- You can add other tools here that you want Mason to install
     'oxfmt', -- CUSTOM: Javascript, Typescript, JSON formatter
     'hclfmt', -- CUSTOM
+    'swiftformat', -- CUSTOM: Swift formatter
+    'xcbeautify', -- CUSTOM: xcodebuild log formatter, used by xcodebuild.nvim
   })
 
   require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -1006,6 +1009,7 @@ do
       yaml = { 'oxfmt' },
       mjs = { 'oxfmt' },
       hcl = { 'hclfmt' },
+      swift = { 'swiftformat' },
     },
     -- CUSTOM: whole formatters table
     formatters = {
@@ -1122,7 +1126,7 @@ do
   -- Ensure basic parsers are installed
   local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
   -- CUSTOM: extra parsers
-  vim.list_extend(parsers, { 'dockerfile', 'javascript', 'json', 'python', 'ssh_config', 'terraform', 'toml', 'typescript', 'yaml' })
+  vim.list_extend(parsers, { 'dockerfile', 'javascript', 'json', 'python', 'ssh_config', 'swift', 'terraform', 'toml', 'typescript', 'yaml' })
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
