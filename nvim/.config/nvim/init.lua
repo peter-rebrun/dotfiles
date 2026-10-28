@@ -955,6 +955,7 @@ do
     'hclfmt', -- CUSTOM
     'swiftformat', -- CUSTOM: Swift formatter
     'xcbeautify', -- CUSTOM: xcodebuild log formatter, used by xcodebuild.nvim
+    'rumdl', -- CUSTOM: Markdown formatter (and linter, see lint.lua)
   })
 
   require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -977,7 +978,8 @@ do
     format_on_save = function(bufnr)
       -- CUSTOM: format everything on save EXCEPT these filetypes
       -- (kickstart's default is an opt-in allowlist)
-      local disable_filetypes = { c = true, cpp = true, dockerfile = true, php = true }
+      -- markdown: rumdl reflows paragraphs, too invasive to run on every save
+      local disable_filetypes = { c = true, cpp = true, dockerfile = true, markdown = true, php = true }
       if disable_filetypes[vim.bo[bufnr].filetype] then
         return nil
       else
@@ -1010,6 +1012,8 @@ do
       mjs = { 'oxfmt' },
       hcl = { 'hclfmt' },
       swift = { 'swiftformat' },
+      -- one sentence per line, per ~/.config/rumdl/rumdl.toml; <leader>F wraps to width instead
+      markdown = { 'rumdl' },
     },
     -- CUSTOM: whole formatters table
     formatters = {
@@ -1019,6 +1023,11 @@ do
       },
       hclfmt = {
         command = 'hclfmt',
+      },
+      -- rumdl with paragraphs wrapped at 100 columns instead of one sentence per line
+      rumdl_wrap = {
+        inherit = 'rumdl',
+        prepend_args = { '--config', 'MD013.reflow-mode = "normalize"', '--config', 'MD013.line-length = 100' },
       },
     },
   }

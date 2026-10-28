@@ -1,0 +1,21 @@
+# Global rumdl config (Markdown linter + formatter), used by nvim-lint and
+# conform. A project's own .rumdl.toml / .markdownlint.json takes precedence.
+
+[global]
+# Superset of GFM: also understands [[wikilinks]], callouts, %%comments%%, ==highlight==
+flavor = "obsidian"
+
+[MD013]
+# One sentence per line (semantic line breaks): diffs stay small and the
+# editor's wrap handles display. <leader>F in nvim reflows to line-length instead.
+reflow = true
+reflow-mode = "sentence-per-line"
+# 0 = no length limit: a long sentence is still one line
+line-length = 0
+# Don't reflow blockquotes: rumdl joins a callout's title line into its body
+blockquotes = false
+
+# Align table columns
+[MD060]
+enabled = true
+style = "aligned"

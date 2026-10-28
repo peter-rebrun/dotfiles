@@ -1,4 +1,4 @@
--- Linting (ruff/mypy for Python, oxlint for JS/TS/JSON, swiftlint for Swift)
+-- Linting (ruff/mypy for Python, oxlint for JS/TS/JSON, swiftlint for Swift, rumdl for Markdown)
 -- mason itself is set up in init.lua's LSP section, which runs before this file.
 vim.pack.add {
   'https://github.com/mfussenegger/nvim-lint',
@@ -19,6 +19,10 @@ mypy.args = {
   '--python-executable .venv/bin/python',
 }
 
+-- nvim-lint's rumdl definition reads stderr, but rumdl (0.3+) prints its JSON
+-- to stdout — without this the parser gets nothing and no diagnostics show.
+lint.linters.rumdl.stream = 'stdout'
+
 -- shellcheck: bash/sh buffers already get shellcheck diagnostics via
 -- bash-language-server, which runs the (Homebrew-installed) binary itself —
 -- adding it here too would duplicate them. zsh is not attached by bashls and
@@ -28,8 +32,9 @@ table.insert(shellcheck_zsh.args, 1, '--shell=bash')
 lint.linters.shellcheck_zsh = shellcheck_zsh
 
 lint.linters_by_ft = {
-  markdown = { 'markdownlint' },
-  -- markdown = { 'vale' },
+  -- rumdl, not markdownlint: same rules, plus it's the formatter (conform), so
+  -- both read the same config (~/.config/rumdl/rumdl.toml or a project's)
+  markdown = { 'rumdl' },
   python = { 'ruff' },
   terraform = { 'tflint' },
   -- 'zsh' runs `zsh --no-exec`: the real zsh parser, syntax errors only.
@@ -58,7 +63,7 @@ require('mason-nvim-lint').setup {
     'mypy',
     'tflint',
     'oxlint',
-    'markdownlint',
+    'rumdl',
     'swiftlint',
   },
 }
