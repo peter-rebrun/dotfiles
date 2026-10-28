@@ -140,13 +140,16 @@ vim.keymap.set('v', '>', '>gv', { desc = 'Indent right and reselect' })
 
 -- Markdown formatting: <leader>f (conform + rumdl) puts one sentence per line;
 -- <leader>F instead wraps paragraphs at 100 columns. gq/gw wrap just a few
--- lines at the same width (formatoptions lack 't', so never while typing).
+-- lines at the same width.
 -- NOTE: gq does not understand code blocks or tables — avoid running it over them.
 vim.api.nvim_create_autocmd('FileType', {
   group = vim.api.nvim_create_augroup('MarkdownTextwidth', { clear = true }),
   pattern = 'markdown',
   callback = function(ev)
     vim.bo[ev.buf].textwidth = 100
+    -- Never auto-wrap while typing: the runtime markdown ftplugin adds 't' (text)
+    -- and 'c' (comments = list items/quotes here). 'q' stays, so gq/gw still work.
+    vim.opt_local.formatoptions:remove { 't', 'c' }
     vim.keymap.set({ 'n', 'v' }, '<leader>F', function()
       require('conform').format { async = true, formatters = { 'rumdl_wrap' } }
     end, { buffer = ev.buf, desc = '[F]ormat markdown wrapped to line length' })
