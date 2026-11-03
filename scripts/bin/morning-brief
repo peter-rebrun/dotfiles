@@ -1,0 +1,169 @@
+#!/bin/zsh
+# Writes today's morning brief into the Obsidian vault with the daily-brief Claude skill.
+# Usage: morning-brief [--force]   (--force skips the weekday, 08:15 and already-done guards)
+
+set -u -o pipefail
+
+VAULT=${MORNING_BRIEF_VAULT:-$HOME/WorkNotes/WorkNotes}
+BRIEFS=$VAULT/03_Periodic/Briefs
+LOG=$HOME/Library/Logs/morning-brief.log
+LOCK=${TMPDIR:-/tmp}/morning-brief.lock
+TIMEOUT_SECS=1800
+BUDGET_USD=5
+MAX_LOOKBACK_SECS=$(( 7 * 86400 ))
+
+force=false
+[[ ${1:-} == --force ]] && force=true
+
+log() {
+  local line="$(date '+%Y-%m-%d %H:%M:%S') $*"
+  print -r -- "$line" >> "$LOG"
+  [[ -t 1 ]] && print -r -- "$line"
+}
+
+notify() {
+  osascript -e 'on run argv' -e 'display notification (item 1 of argv) with title "Morning brief"' -e 'end run' -- "$1" 2>/dev/null
+}
+
+# Prints the value of a top-level frontmatter key, unquoted.
+fm() {
+  awk -v k="$2" '
+    { sub(/\r$/, "") }
+    NR == 1 && $0 != "---" { exit }
+    NR > 1 && $0 == "---" { exit }
+    NR > 1 && index($0, k ":") == 1 {
+      v = substr($0, length(k) + 2); gsub(/^[ \t]+|[ \t]+$/, "", v); gsub(/^["'\'']|["'\'']$/, "", v); print v; exit
+    }
+  ' "$1" 2>/dev/null
+}
+
+iso() {
+  local s=$(date -r "$1" +%Y-%m-%dT%H:%M:%S%z)
+  print -r -- "${s[1,-3]}:${s[-2,-1]}"
+}
+
+now_epoch=${MORNING_BRIEF_NOW_EPOCH:-$(date +%s)}  # override for testing the guards
+now=$(iso "$now_epoch")
+today=$(date -r "$now_epoch" +%Y-%m-%d)
+brief="$BRIEFS/$today brief.md"
+draft="$BRIEFS/.$today brief.tmp"
+
+if ! $force; then
+  (( $(date -r "$now_epoch" +%u) > 5 )) && exit 0
+  (( 10#$(date -r "$now_epoch" +%H%M) < 815 )) && exit 0
+  [[ $(fm "$brief" status) == complete ]] && exit 0
+fi
+
+if ! mkdir "$LOCK" 2>/dev/null; then
+  if kill -0 "$(cat "$LOCK/pid" 2>/dev/null)" 2>/dev/null; then
+    log "another run is in progress, exiting"
+    exit 0
+  fi
+  rm -rf "$LOCK"
+  mkdir "$LOCK" || exit 1
+fi
+print $$ > "$LOCK/pid"
+pid= watchdog=
+cleanup() {
+  [[ -n $watchdog ]] && { pkill -P $watchdog 2>/dev/null; kill $watchdog 2>/dev/null }
+  [[ -n $pid ]] && kill $pid 2>/dev/null
+  rm -rf "$LOCK"
+}
+trap cleanup EXIT
+trap 'exit 1' INT TERM HUP
+
+claude_bin=$(command -v claude || true)
+for c in /opt/homebrew/bin/claude $HOME/.local/bin/claude; do
+  [[ -n $claude_bin ]] && break
+  [[ -x $c ]] && claude_bin=$c
+done
+if [[ -z $claude_bin ]]; then
+  log "claude not found"
+  notify "Failed: claude not found"
+  exit 1
+fi
+
+# Network is often not up straight after wake.
+for i in {1..30}; do
+  curl -s --max-time 3 -o /dev/null https://api.anthropic.com && break
+  (( i == 30 )) && { log "no network"; notify "Failed: no network"; exit 1 }
+  sleep 5
+done
+
+since_epoch=
+for f in $BRIEFS/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ brief.md(N.On); do
+  [[ $f == "$brief" ]] && continue
+  [[ $(fm "$f" status) == complete ]] || continue
+  since_epoch=$(fm "$f" generated_epoch)
+  break
+done
+if [[ $since_epoch != <-> ]]; then
+  days=1
+  (( $(date -r "$now_epoch" +%u) == 1 )) && days=3
+  since_epoch=$(( now_epoch - days * 86400 ))
+fi
+(( since_epoch < now_epoch - MAX_LOOKBACK_SECS )) && since_epoch=$(( now_epoch - MAX_LOOKBACK_SECS ))
+# Derived from the epoch only: a brief's frontmatter text never reaches the prompt.
+since=$(iso "$since_epoch")
+
+# The skill writes a hidden draft; it only becomes a note once sanitised below.
+allowed=(
+  "Edit(./03_Periodic/Briefs/.$today*)"
+  mcp__claude_ai_Gmail__{search_threads,get_thread,get_message,list_labels}
+  mcp__claude_ai_Google_Calendar__{list_calendars,list_events,get_event,search_events}
+  mcp__claude_ai_Atlassian_Rovo_2__{atlassianUserInfo,getAccessibleAtlassianResources,searchJiraIssuesUsingJql,getJiraIssue,getJiraIssueRemoteIssueLinks,lookupJiraAccountId,searchConfluenceUsingCql,getConfluencePage,getConfluencePageFooterComments,getConfluencePageInlineComments,getConfluenceCommentChildren,getConfluenceSpaces,fetch}
+  mcp__claude_ai_Slack__{slack_search_public_and_private,slack_search_public,slack_read_channel,slack_read_thread,slack_read_user_profile,slack_search_users,slack_search_channels,slack_read_canvas}
+)
+denied=(
+  mcp__claude_ai_Gmail__{apply_sensitive_message_label,apply_sensitive_thread_label,create_draft,create_label,delete_draft,delete_label,forward,label_message,label_thread,mark_message_spam,mark_thread_spam,reply,send_message,trash_message,trash_thread,unlabel_message,unlabel_thread,unmark_message_spam,unmark_thread_spam,untrash_message,untrash_thread,update_draft,update_label,update_message_labels}
+  mcp__claude_ai_Google_Calendar__{create_event,delete_event,update_event,respond_to_event}
+  mcp__claude_ai_Atlassian_Rovo_2__{addCommentToJiraIssue,addWorklogToJiraIssue,createConfluenceFooterComment,createConfluenceInlineComment,createConfluencePage,createIssueLink,createJiraIssue,editJiraIssue,transitionJiraIssue,updateConfluencePage,createCompassComponent,createCompassComponentRelationship,createCompassCustomFieldDefinition}
+  mcp__claude_ai_Slack__{slack_send_message,slack_send_message_draft,slack_schedule_message,slack_create_canvas,slack_update_canvas}
+  'mcp__claude_ai_Atlassian_Rovo__*' 'mcp__incident_io__*'
+)
+
+mkdir -p "$BRIEFS"
+cd "$VAULT" || exit 1
+rm -f "$draft"
+log "starting brief for $today (since $since) with $claude_bin"
+
+# User settings only: the vault's own .claude settings carry unrelated allow rules.
+CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 "$claude_bin" \
+  -p "/daily-brief:daily-brief today=$today now=$now now_epoch=$now_epoch since=$since since_epoch=$since_epoch" \
+  --setting-sources user \
+  --permission-mode dontAsk \
+  --tools Read,Write,Edit,Glob,Grep \
+  --allowedTools "${(j:,:)allowed}" \
+  --disallowedTools "${(j:,:)denied}" \
+  --max-budget-usd $BUDGET_USD \
+  >> "$LOG" 2>&1 &
+pid=$!
+(
+  for i in {1..$(( TIMEOUT_SECS / 5 ))}; do
+    sleep 5
+    kill -0 $pid 2>/dev/null || exit 0
+  done
+  kill $pid 2>/dev/null
+) &
+watchdog=$!
+wait $pid
+rc=$?
+pid=
+
+# Templater runs <% %> in any new non-empty note and Obsidian renders HTML and remote images,
+# so mail and Slack text is defanged before the draft becomes a note.
+state=missing
+if [[ -f $draft ]]; then
+  LC_ALL=C sed -e 's/</\&lt;/g' -e 's/!\[/[/g' "$draft" > "$draft.clean" && mv "$draft.clean" "$brief"
+  rm -f "$draft"
+  state=$(fm "$brief" status)
+  [[ $state == (complete|partial) ]] || state=invalid
+fi
+if [[ $state == complete ]]; then
+  log "brief complete (claude exit $rc)"
+  notify "Morning brief ready"
+  exit 0
+fi
+log "brief $state (claude exit $rc)"
+notify "Failed: brief $state, claude exit $rc"
+exit 1

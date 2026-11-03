@@ -57,6 +57,23 @@ brew leaves > brew_formulas.txt          # formulas you installed explicitly
 brew list --cask > brew_casks.txt
 ```
 
+## Morning brief
+
+`morning-brief` (in the `scripts` package) runs Claude Code headless on weekday mornings to write a summary of Gmail, Calendar, Jira, Confluence and Slack into `03_Periodic/Briefs/` in the Obsidian vault.
+It needs the `daily-brief` plugin from `peter-rebrun/claude-skills`, and the claude.ai connectors logged in: run `claude`, then check `/mcp`.
+
+Install the LaunchAgent on the main laptop only; other laptops receive the briefs through vault sync.
+It fires at 08:15, retries hourly until 11:15, and runs on the next wake when the laptop slept through a fire.
+
+```sh
+~/bin/morning-brief-install          # write and load ~/Library/LaunchAgents/com.peter-rebrun.morning-brief.plist
+~/bin/morning-brief-install --uninstall
+~/bin/morning-brief --force          # run now, skipping the weekday, time and already-done checks
+launchctl kickstart -k gui/$(id -u)/com.peter-rebrun.morning-brief   # run through launchd
+```
+
+The log is `~/Library/Logs/morning-brief.log`.
+
 ## nvim: kickstart sync workflow
 
 `nvim/.config/nvim` is based on [kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim)
