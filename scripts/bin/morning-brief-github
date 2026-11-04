@@ -1,0 +1,80 @@
+#!/bin/zsh
+# Prints GitHub review requests, PR state and notifications since <since_epoch> as JSON for the daily brief.
+# Usage: morning-brief-github <since_epoch>   (read-only; prints {"error": ...} and exits 1 on failure)
+
+set -u -o pipefail
+umask 077
+
+user=${MORNING_BRIEF_GH_USER:-peterrebrun-splose}
+owner=${MORNING_BRIEF_GH_OWNER:-sploseans}
+since_epoch=${1:-}
+since_iso=
+
+work=$(mktemp -d) || { print -r -- '{"error": "mktemp failed"}'; exit 1 }
+trap 'rm -rf "$work"' EXIT
+
+fail() {
+  jq -n --arg e "$1" --arg s "$since_iso" '{error: $e, since: $s}'
+  exit 1
+}
+
+# First line of gh's stderr, so a failure says why (rate limit, 403) without echoing anything else.
+why() { head -1 "$work/err" 2>/dev/null | cut -c1-200 }
+
+[[ $since_epoch == <-> ]] || fail "usage: morning-brief-github <since_epoch>"
+since_iso=$(date -u -r "$since_epoch" +%Y-%m-%dT%H:%M:%SZ)
+
+export GH_TOKEN=$(gh auth token -u "$user" 2>"$work/err")
+[[ -n $GH_TOKEN ]] || fail "no gh token for $user: $(why)"
+
+pr_shape='[.[] | {repo: .repository.nameWithOwner, number, title, url, author: .author.login, state, isDraft, updatedAt}]'
+search() {
+  local name=$1 what=$2; shift 2
+  gh search prs --owner "$owner" --limit 50 --json number,title,url,repository,author,state,isDraft,updatedAt "$@" \
+    > "$work/raw" 2> "$work/err" || fail "$what failed: $(why)"
+  jq -c "$pr_shape" "$work/raw" > "$work/$name.json" || fail "$what returned invalid JSON"
+}
+
+search review_requested "search for review requests" --review-requested=@me --state=open
+search authored_open "search for open authored PRs" --author=@me --state=open
+search involved_updated "search for updated PRs" --involves=@me --updated=">=$since_iso"
+search merged_since "search for merged PRs" --author=@me --merged --merged-at=">=$since_iso"
+
+gh api --paginate "notifications?all=true&participating=true&since=$since_iso" > "$work/raw" 2> "$work/err" \
+  || fail "notifications request failed: $(why)"
+jq -s -c --arg o "$owner" '[.[][] | select(.repository.owner.login == $o)
+    | .repository.full_name as $r | (.subject.url // "") as $u
+    | {reason, type: .subject.type, title: .subject.title, repo: $r, updated_at,
+       url: (if .subject.type == "PullRequest" and ($u | test("/pulls/[0-9]+$")) then "https://github.com/\($r)/pull/\($u | capture("/pulls/(?<n>[0-9]+)$").n)"
+             elif .subject.type == "Issue" and ($u | test("/issues/[0-9]+$")) then "https://github.com/\($r)/issues/\($u | capture("/issues/(?<n>[0-9]+)$").n)"
+             elif .subject.type == "Commit" and ($u | test("/commits/[0-9a-f]+$")) then "https://github.com/\($r)/commit/\($u | capture("/commits/(?<s>[0-9a-f]+)$").s)"
+             else "https://github.com/\($r)" end)}]' \
+  "$work/raw" > "$work/notifications.json" || fail "notifications returned invalid JSON"
+
+# Review requests first, then the most recently updated PRs; one failed read only loses that PR.
+jq -r -s '(.[0] + (.[1] | sort_by(.updatedAt) | reverse))
+    | reduce .[] as $p ([]; if any(.[]; .url == $p.url) then . else . + [$p] end)
+    | .[:20][] | "\(.repo) \(.number)"' \
+  "$work/review_requested.json" "$work/involved_updated.json" > "$work/candidates" || fail "selecting PRs for details failed"
+: > "$work/details.jsonl"
+while read -r repo n; do
+  if gh pr view "$n" -R "$repo" --json url,title,state,isDraft,mergedAt,reviewDecision,body,latestReviews,comments \
+      > "$work/pr.json" 2> "$work/err"; then
+    jq -c --arg k "$repo#$n" '{key: $k, value: {url, title, state, isDraft, mergedAt, reviewDecision, body: ((.body // "")[:4000]),
+        latestReviews: [.latestReviews[] | {author: .author.login, state, body: ((.body // "")[:1000])}],
+        comments: [.comments[-10:][] | {author: .author.login, createdAt, body: ((.body // "")[:1000])}]}}' \
+      "$work/pr.json" >> "$work/details.jsonl" || fail "reading $repo#$n returned invalid JSON"
+  else
+    jq -cn --arg k "$repo#$n" --arg e "$(why)" '{key: $k, value: {error: $e}}' >> "$work/details.jsonl" || fail "recording $repo#$n failed"
+  fi
+done < "$work/candidates"
+jq -s 'from_entries' "$work/details.jsonl" > "$work/details.json" || fail "assembling details failed"
+
+jq -n --arg g "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg s "$since_iso" --arg u "$user" \
+  --slurpfile rr "$work/review_requested.json" --slurpfile ao "$work/authored_open.json" \
+  --slurpfile iu "$work/involved_updated.json" --slurpfile ms "$work/merged_since.json" \
+  --slurpfile no "$work/notifications.json" --slurpfile de "$work/details.json" \
+  '{generated_at: $g, since: $s, user: $u, review_requested: $rr[0], authored_open: $ao[0],
+    involved_updated: $iu[0], merged_since: $ms[0], notifications: $no[0], details: $de[0]}' \
+  > "$work/out.json" || fail "assembling output failed"
+cat "$work/out.json"
