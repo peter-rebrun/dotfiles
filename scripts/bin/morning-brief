@@ -3,13 +3,14 @@
 # Usage: morning-brief [--force]   (--force skips the weekday, 08:15 and already-done guards)
 
 set -u -o pipefail
+umask 077
 
 VAULT=${MORNING_BRIEF_VAULT:-$HOME/WorkNotes/WorkNotes}
 BRIEFS=$VAULT/03_Periodic/Briefs
 LOG=$HOME/Library/Logs/morning-brief.log
 LOCK=${TMPDIR:-/tmp}/morning-brief.lock
 TIMEOUT_SECS=1800
-BUDGET_USD=5
+BUDGET_USD=8
 MAX_LOOKBACK_SECS=$(( 7 * 86400 ))
 
 force=false
@@ -47,6 +48,8 @@ now=$(iso "$now_epoch")
 today=$(date -r "$now_epoch" +%Y-%m-%d)
 brief="$BRIEFS/$today brief.md"
 draft="$BRIEFS/.$today brief.tmp"
+github="$BRIEFS/.$today github.json"
+out=
 
 if ! $force; then
   (( $(date -r "$now_epoch" +%u) > 5 )) && exit 0
@@ -67,10 +70,12 @@ pid= watchdog=
 cleanup() {
   [[ -n $watchdog ]] && { pkill -P $watchdog 2>/dev/null; kill $watchdog 2>/dev/null }
   [[ -n $pid ]] && kill $pid 2>/dev/null
+  rm -f "$github" "$out"
   rm -rf "$LOCK"
 }
 trap cleanup EXIT
 trap 'exit 1' INT TERM HUP
+out=$(mktemp) || exit 1
 
 claude_bin=$(command -v claude || true)
 for c in /opt/homebrew/bin/claude $HOME/.local/bin/claude; do
@@ -108,7 +113,7 @@ since=$(iso "$since_epoch")
 
 # The skill writes a hidden draft; it only becomes a note once sanitised below.
 allowed=(
-  "Edit(./03_Periodic/Briefs/.$today*)"
+  "Edit(./03_Periodic/Briefs/.$today*brief.tmp*)"
   mcp__claude_ai_Gmail__{search_threads,get_thread,get_message,list_labels}
   mcp__claude_ai_Google_Calendar__{list_calendars,list_events,get_event,search_events}
   mcp__claude_ai_Atlassian_Rovo_2__{atlassianUserInfo,getAccessibleAtlassianResources,searchJiraIssuesUsingJql,getJiraIssue,getJiraIssueRemoteIssueLinks,lookupJiraAccountId,searchConfluenceUsingCql,getConfluencePage,getConfluencePageFooterComments,getConfluencePageInlineComments,getConfluenceCommentChildren,getConfluenceSpaces,fetch}
@@ -124,7 +129,14 @@ denied=(
 
 mkdir -p "$BRIEFS"
 cd "$VAULT" || exit 1
-rm -f "$draft"
+rm -f "$draft" "$github"
+if "${0:A:h}/morning-brief-github" "$since_epoch" > "$github" 2>> "$LOG" \
+    && jq -e 'type == "object" and (has("error") | not)' "$github" >/dev/null 2>&1; then
+  log "github prefetch ok"
+else
+  reason=$(jq -r '.error // empty' "$github" 2>/dev/null)
+  log "github prefetch failed: ${reason:-empty or invalid output}"
+fi
 log "starting brief for $today (since $since) with $claude_bin"
 
 # User settings only: the vault's own .claude settings carry unrelated allow rules.
@@ -136,7 +148,8 @@ CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 "$claude_bin" \
   --allowedTools "${(j:,:)allowed}" \
   --disallowedTools "${(j:,:)denied}" \
   --max-budget-usd $BUDGET_USD \
-  >> "$LOG" 2>&1 &
+  --output-format json \
+  > "$out" 2>> "$LOG" &
 pid=$!
 (
   for i in {1..$(( TIMEOUT_SECS / 5 ))}; do
@@ -150,12 +163,17 @@ wait $pid
 rc=$?
 pid=
 
-# Templater runs <% %> in any new non-empty note and Obsidian renders HTML and remote images,
-# so mail and Slack text is defanged before the draft becomes a note.
+if command -v jq >/dev/null && jq -e . "$out" >/dev/null 2>&1; then
+  session=$(jq -r .session_id "$out")
+  log "$(jq -r '"session \(.session_id) cost $\(.total_cost_usd) turns \(.num_turns) error \(.is_error)"' "$out")"
+  log "transcript $HOME/.claude/projects/${VAULT//[^A-Za-z0-9]/-}/$session.jsonl"
+  jq -r '.result // empty' "$out" >> "$LOG"
+elif [[ -f $out ]]; then
+  cat "$out" >> "$LOG"
+fi
+
 state=missing
-if [[ -f $draft ]]; then
-  LC_ALL=C sed -e 's/</\&lt;/g' -e 's/!\[/[/g' "$draft" > "$draft.clean" && mv "$draft.clean" "$brief"
-  rm -f "$draft"
+if [[ -f $draft ]] && "${0:A:h}/morning-brief-finalise" "$draft" "$brief"; then
   state=$(fm "$brief" status)
   [[ $state == (complete|partial) ]] || state=invalid
 fi

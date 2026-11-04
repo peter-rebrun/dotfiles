@@ -72,7 +72,10 @@ It fires at 08:15, retries hourly until 11:15, and runs on the next wake when th
 launchctl kickstart -k gui/$(id -u)/com.peter-rebrun.morning-brief   # run through launchd
 ```
 
-The log is `~/Library/Logs/morning-brief.log`.
+`morning-brief-github` feeds GitHub review requests, PR state and notifications into the brief, read-only through the gh work account (`MORNING_BRIEF_GH_USER`, default `peterrebrun-splose`).
+`morning-brief-finalise` turns the skill's draft into the note, escaping Templater, HTML, image, link and Dataview syntax and dropping any Ask Claude prompt that is not one of the skill's templates.
+After pulling changes here, run `stow -R scripts` so new scripts land in `~/bin`; interactive skill runs call `~/bin/morning-brief-github` and `~/bin/morning-brief-finalise`.
+The log is `~/Library/Logs/morning-brief.log`; it records each run's session ID, cost and transcript path.
 
 ## nvim: kickstart sync workflow
 
