@@ -34,9 +34,13 @@ part="${brief:h}/.${brief:t}.$$.part"
     $line =~ s/`(?=\$?=)/`\x{200B}/g;
     if ($in_prompt && $line =~ /^\s*>/) {
       $line =~ s/^(\s*)>.*\z/$1> (prompt removed: not an allowed template)/
-        unless $line =~ /^\s*> $template $suffix\z/;
+        unless $line =~ /^\s*> $template $suffix\z/ || $line =~ /^\s*> ```(?:text)?\s*\z/;
     } else {
-      $in_prompt = $line =~ /^\s*> \[!example\]- Ask Claude\s*\z/ ? 1 : 0;
+      # A text line straight after the callout would continue it lazily and skip the check above.
+      print "\n" if $in_prompt && $line =~ /\S/;
+      $in_prompt = $line =~ /^\s*(?:>\s*)+\[![^\]]*\][+-]?[^\n]*\bask\s+claude\b/i ? 1 : 0;
+      # Code blocks belong only in Ask Claude callouts, so any other fence is made literal.
+      $line =~ s/^(\s*(?:>\s*)*)(`{3,}|~{3,})/$1\\$2/;
     }
     print $line, $eol;
   }
