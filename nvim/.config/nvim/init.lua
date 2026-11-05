@@ -605,7 +605,10 @@ do
   vim.keymap.set(
     'n',
     '<Leader>sf',
-    ':lua require"telescope.builtin".find_files({ find_command = {"rg", "--files", "--hidden", "-g", "!.git" }})<CR>',
+    -- --no-ignore-exclude: list files ignored only via .git/info/exclude (the
+    -- .pr-description.md drafts) while .gitignore stays honoured; the .claude
+    -- glob re-hides session state that aws-account-orchestration excludes there.
+    ':lua require"telescope.builtin".find_files({ find_command = {"rg", "--files", "--hidden", "--no-ignore-exclude", "-g", "!.git", "-g", "!**/.claude/**" }})<CR>',
     { noremap = true, silent = true, desc = '[S]earch [F]iles' }
   )
   vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
