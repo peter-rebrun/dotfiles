@@ -149,6 +149,7 @@ CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 "$claude_bin" \
   --disallowedTools "${(j:,:)denied}" \
   --max-budget-usd $BUDGET_USD \
   --output-format json \
+  < /dev/null \
   > "$out" 2>> "$LOG" &
 pid=$!
 (
