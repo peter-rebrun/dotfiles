@@ -63,7 +63,9 @@ brew list --cask > brew_casks.txt
 It needs the `daily-brief` plugin from `peter-rebrun/claude-skills`, and the claude.ai connectors logged in: run `claude`, then check `/mcp`.
 
 Install the LaunchAgent on the main laptop only; other laptops receive the briefs through vault sync.
-It fires at 08:15, retries hourly until 11:15, and runs on the next wake when the laptop slept through a fire.
+It fires every 15 minutes from 08:15 to 11:45, then hourly until 17:00, and runs on the next wake when the laptop slept through a fire.
+A fire during a dark wake (lid closed, no display) is skipped, at most 3 runs a day reach Claude, `--force` runs included, and a failure notifies once a day.
+After pulling a schedule change, re-run `~/bin/morning-brief-install` so launchd loads it.
 
 ```sh
 ~/bin/morning-brief-install          # write and load ~/Library/LaunchAgents/com.peter-rebrun.morning-brief.plist

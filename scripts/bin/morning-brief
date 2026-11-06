@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Writes today's morning brief into the Obsidian vault with the daily-brief Claude skill.
-# Usage: morning-brief [--force]   (--force skips the weekday, 08:15 and already-done guards)
+# Usage: morning-brief [--force]   (--force skips the weekday, 08:15, already-done, dark-wake and daily-limit checks; forced runs still count)
 
 set -u -o pipefail
 umask 077
@@ -20,6 +20,14 @@ log() {
   local line="$(date '+%Y-%m-%d %H:%M:%S') $*"
   print -r -- "$line" >> "$LOG"
   [[ -t 1 ]] && print -r -- "$line"
+}
+
+# Retries fire every 15 minutes, so a failure notifies only once a day.
+fail_notify() {
+  local marker="${TMPDIR:-/tmp}/morning-brief.$today.failed"
+  [[ -f $marker ]] && return
+  : > "$marker"
+  notify "$1"
 }
 
 notify() {
@@ -57,6 +65,21 @@ if ! $force; then
   [[ $(fm "$brief" status) == complete ]] && exit 0
 fi
 
+attempts="${TMPDIR:-/tmp}/morning-brief.$today.attempts"
+attempt_count() { local n=; [[ -f $attempts ]] && n=$(<"$attempts"); [[ $n == <-> ]] && print $n || print 0 }
+if ! $force; then
+  # launchd also fires during dark wakes, which have no display and unreliable network.
+  caps=$(pmset -g systemstate 2>/dev/null | grep 'Current System Capabilities are:')
+  if [[ -n $caps && $caps != *Graphics* ]]; then
+    log "dark wake, skipping"
+    exit 0
+  fi
+  if (( $(attempt_count) >= 3 )); then
+    log "attempt limit reached"
+    exit 0
+  fi
+fi
+
 if ! mkdir "$LOCK" 2>/dev/null; then
   if kill -0 "$(cat "$LOCK/pid" 2>/dev/null)" 2>/dev/null; then
     log "another run is in progress, exiting"
@@ -84,14 +107,14 @@ for c in /opt/homebrew/bin/claude $HOME/.local/bin/claude; do
 done
 if [[ -z $claude_bin ]]; then
   log "claude not found"
-  notify "Failed: claude not found"
+  fail_notify "Failed: claude not found"
   exit 1
 fi
 
 # Network is often not up straight after wake.
 for i in {1..30}; do
   curl -s --max-time 3 -o /dev/null https://api.anthropic.com && break
-  (( i == 30 )) && { log "no network"; notify "Failed: no network"; exit 1 }
+  (( i == 30 )) && { log "no network"; fail_notify "Failed: no network"; exit 1 }
   sleep 5
 done
 
@@ -137,6 +160,7 @@ else
   reason=$(jq -r '.error // empty' "$github" 2>/dev/null)
   log "github prefetch failed: ${reason:-empty or invalid output}"
 fi
+print $(( $(attempt_count) + 1 )) > "$attempts"
 log "starting brief for $today (since $since) with $claude_bin"
 
 # User settings only: the vault's own .claude settings carry unrelated allow rules.
@@ -184,5 +208,5 @@ if [[ $state == complete ]]; then
   exit 0
 fi
 log "brief $state (claude exit $rc)"
-notify "Failed: brief $state, claude exit $rc"
+fail_notify "Failed: brief $state, claude exit $rc"
 exit 1
