@@ -28,6 +28,9 @@ alias history='fc -il 1'      # timestamped listing (like OMZ HIST_STAMPS)
 setopt interactive_comments
 
 # --- Keybindings: arrows search history filtered by the typed prefix ---
+# zsh picks vi mode when $EDITOR contains "vi" (inherited inside tmux); force emacs.
+# Must precede the bindkeys below, which bind into whatever keymap is current.
+bindkey -e
 autoload -U up-line-or-beginning-search down-line-or-beginning-search
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
