@@ -14,6 +14,7 @@ tmux/.tmux.conf            -> ~/.tmux.conf
 wezterm/.wezterm.lua       -> ~/.wezterm.lua
 ghostty/.config/ghostty/   -> ~/.config/ghostty/
 scripts/bin/...            -> ~/bin/...
+claude/.claude/statusline.sh -> ~/.claude/statusline.sh (Claude Code status line; settings.json stays local)
 ```
 
 ## Setup on a new machine
@@ -28,7 +29,7 @@ xargs brew install --cask < ~/dotfiles/brew_casks.txt
 
 # 3. Symlink the configs (stow is in brew_formulas.txt)
 cd ~/dotfiles
-stow nvim zsh tmux wezterm ghostty scripts
+stow nvim zsh tmux wezterm ghostty scripts claude
 ```
 
 ## Using stow
