@@ -12,6 +12,7 @@ nvim/.config/nvim/...      -> ~/.config/nvim/...
 zsh/.zshrc, .zprofile, ...  -> ~/.zshrc, ~/.zprofile, ~/.oh-my-zsh (submodule), ~/bin/{c,connect,wt}
 tmux/.tmux.conf            -> ~/.tmux.conf
 wezterm/.wezterm.lua       -> ~/.wezterm.lua
+ghostty/.config/ghostty/   -> ~/.config/ghostty/
 scripts/bin/...            -> ~/bin/...
 ```
 
@@ -27,7 +28,7 @@ xargs brew install --cask < ~/dotfiles/brew_casks.txt
 
 # 3. Symlink the configs (stow is in brew_formulas.txt)
 cd ~/dotfiles
-stow nvim zsh tmux wezterm scripts
+stow nvim zsh tmux wezterm ghostty scripts
 ```
 
 ## Using stow
