@@ -156,6 +156,25 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- Scratch buffers (:enew, :new, :vnew, bare `nvim`) default to markdown, so
+-- quick notes get rumdl linting/formatting. Only empty, unnamed, normal buffers:
+-- plugin panes (pickers, Lazy, help) have a buftype and are skipped.
+vim.api.nvim_create_autocmd('BufEnter', {
+  group = vim.api.nvim_create_augroup('ScratchMarkdown', { clear = true }),
+  callback = function(ev)
+    local bo = vim.bo[ev.buf]
+    if
+      bo.buftype == ''
+      and bo.filetype == ''
+      and vim.api.nvim_buf_get_name(ev.buf) == ''
+      and vim.api.nvim_buf_line_count(ev.buf) == 1
+      and vim.api.nvim_buf_get_lines(ev.buf, 0, 1, false)[1] == ''
+    then
+      bo.filetype = 'markdown'
+    end
+  end,
+})
+
 -- In the fugitive status buffer, <CR> on a STAGED file opens the read-only
 -- index object (fugitive:///...//0/...) by design. Override: file lines open
 -- the work-tree file; anything else replays fugitive's original mapping.
