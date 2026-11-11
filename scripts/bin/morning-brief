@@ -10,7 +10,8 @@ BRIEFS=$VAULT/03_Periodic/Briefs
 LOG=$HOME/Library/Logs/morning-brief.log
 LOCK=${TMPDIR:-/tmp}/morning-brief.lock
 TIMEOUT_SECS=1800
-BUDGET_USD=8
+MODEL=opus  # pinned: the interactive /model default must not change the brief's cost
+LAST_ATTEMPT_HHMM=1115  # the last StartCalendarInterval in morning-brief-install
 MAX_LOOKBACK_SECS=$(( 7 * 86400 ))
 
 force=false
@@ -91,7 +92,14 @@ fi
 # Network is often not up straight after wake.
 for i in {1..30}; do
   curl -s --max-time 3 -o /dev/null https://api.anthropic.com && break
-  (( i == 30 )) && { log "no network"; notify "Failed: no network"; exit 1 }
+  if (( i == 30 )); then
+    log "no network"
+    # Usually a wake before Wi-Fi is up; a later scheduled run retries, so only the last one alerts.
+    if $force || (( 10#$(date -r "$now_epoch" +%H%M) >= LAST_ATTEMPT_HHMM )); then
+      notify "Failed: no network"
+    fi
+    exit 1
+  fi
   sleep 5
 done
 
@@ -118,18 +126,24 @@ allowed=(
   mcp__claude_ai_Google_Calendar__{list_calendars,list_events,get_event,search_events}
   mcp__claude_ai_Atlassian_Rovo_2__{atlassianUserInfo,getAccessibleAtlassianResources,searchJiraIssuesUsingJql,getJiraIssue,getJiraIssueRemoteIssueLinks,lookupJiraAccountId,searchConfluenceUsingCql,getConfluencePage,getConfluencePageFooterComments,getConfluencePageInlineComments,getConfluenceCommentChildren,getConfluenceSpaces,fetch}
   mcp__claude_ai_Slack__{slack_search_public_and_private,slack_search_public,slack_read_channel,slack_read_thread,slack_read_user_profile,slack_search_users,slack_search_channels,slack_read_canvas}
+  mcp__incident_io__{identity_show,incident_list,incident_show,incident_update_list,follow_up_list,escalation_list,escalation_show,escalations_list,schedule_list,schedule_show,skill_list,skill_show}
 )
+# User settings allow every mcp__incident_io__* tool for interactive use, and a deny is the only
+# thing that beats that allow. So every incident.io tool outside the reads above is denied by name.
+# A tool incident.io adds later is NOT covered: extend this list when its MCP server grows.
 denied=(
   mcp__claude_ai_Gmail__{apply_sensitive_message_label,apply_sensitive_thread_label,create_draft,create_label,delete_draft,delete_label,forward,label_message,label_thread,mark_message_spam,mark_thread_spam,reply,send_message,trash_message,trash_thread,unlabel_message,unlabel_thread,unmark_message_spam,unmark_thread_spam,untrash_message,untrash_thread,update_draft,update_label,update_message_labels}
   mcp__claude_ai_Google_Calendar__{create_event,delete_event,update_event,respond_to_event}
   mcp__claude_ai_Atlassian_Rovo_2__{addCommentToJiraIssue,addWorklogToJiraIssue,createConfluenceFooterComment,createConfluenceInlineComment,createConfluencePage,createIssueLink,createJiraIssue,editJiraIssue,transitionJiraIssue,updateConfluencePage,createCompassComponent,createCompassComponentRelationship,createCompassCustomFieldDefinition}
   mcp__claude_ai_Slack__{slack_send_message,slack_send_message_draft,slack_schedule_message,slack_create_canvas,slack_update_canvas}
-  'mcp__claude_ai_Atlassian_Rovo__*' 'mcp__incident_io__*'
+  mcp__incident_io__{action_convert,action_create,action_delete,action_list,action_update,alert_attach,alert_attachment_manage,alert_create_incident,alert_detach,alert_list,alert_note_list,alert_note_manage,alert_resolve,alert_show,alert_source_list,alert_stats,alert_tag_apply,alert_tag_list,analysis_start,catalog_entry_list,catalog_entry_show,catalog_type_list,change_event_list,change_event_show,chat_thread_list,chat_thread_show,cover_request_create,cover_request_list,cover_request_manage,cover_request_respond,custom_dashboard_create,custom_field_values,dashboard_describe,dashboard_query,dashboard_search,dependent_resource_list,document_search,document_show,duration_metrics_stats,escalation_create,escalation_path_list,escalation_path_show,escalation_respond,escalation_stats,extension_connector_list,extension_plugin_create,extension_plugin_list,extension_plugin_sync,extension_plugin_update,extension_skill_feedback_list,extension_skill_feedback_update,extension_skill_usage_list,extension_upload_url,extension_verify,extension_verify_show,external_service_list,external_service_status,feedback,follow_up_create,follow_up_stats,follow_up_update,glossary_create,glossary_delete,glossary_list,glossary_update,help_query,identity_get,incident_attachment_create,incident_create,incident_merge,incident_message,incident_pin,incident_stats,incident_unmerge,incident_update,insights_chart_data_show,insights_chart_explore_url,insights_chart_options,insights_dashboard_add_chart,insights_dashboard_duplicate,insights_dashboard_list,insights_dashboard_remove_panel,insights_dashboard_show,insights_dashboard_update_chart,insights_dashboard_update_section,insights_dashboard_update_visibility,investigation_feedback,investigation_start,investigation_steer,investigation_sync,kubernetes_describe,kubernetes_expand,kubernetes_list,log_filter,log_query,maintenance_window_alerts,maintenance_window_create,maintenance_window_delete,maintenance_window_list,maintenance_window_update,memory_recall,metric_query,nexus_health_show,notification_pause_create,notification_pause_delete,notification_pause_list,notification_pause_resume,notification_pause_update,open_url,postmortem_create,postmortem_destination_list,postmortem_edit,postmortem_image_upload_url,postmortem_list,postmortem_show,postmortem_template_list,profile_query,profile_types,profile_view,read_images,resource_list,resource_show,schedule_override_create,schedule_override_delete,setup,span_query,span_view,sql_filter,sql_query,sql_search,sql_structure,status_page_update,suggestion_list,team_list,team_show,telemetry_guidance_show,telemetry_inspect,time_spent_stats,trace_get,user_list}
+  'mcp__claude_ai_Atlassian_Rovo__*' 'mcp__claude_ai_incident_io__*'
 )
 
 mkdir -p "$BRIEFS"
 cd "$VAULT" || exit 1
 rm -f "$draft" "$github"
+prior=$(fm "$brief" status)  # a retry that is still partial replaces the note without a second alert
 if "${0:A:h}/morning-brief-github" "$since_epoch" > "$github" 2>> "$LOG" \
     && jq -e 'type == "object" and (has("error") | not)' "$github" >/dev/null 2>&1; then
   log "github prefetch ok"
@@ -147,7 +161,7 @@ CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 "$claude_bin" \
   --tools Read,Write,Edit,Glob,Grep \
   --allowedTools "${(j:,:)allowed}" \
   --disallowedTools "${(j:,:)denied}" \
-  --max-budget-usd $BUDGET_USD \
+  --model $MODEL \
   --output-format json \
   < /dev/null \
   > "$out" 2>> "$LOG" &
@@ -184,5 +198,9 @@ if [[ $state == complete ]]; then
   exit 0
 fi
 log "brief $state (claude exit $rc)"
-notify "Failed: brief $state, claude exit $rc"
+if [[ $state == partial ]]; then
+  [[ $prior == partial ]] || notify "Morning brief ready (partial)"
+else
+  notify "Failed: brief $state, claude exit $rc"
+fi
 exit 1
