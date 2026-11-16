@@ -31,6 +31,9 @@ setopt interactive_comments
 # zsh picks vi mode when $EDITOR contains "vi" (inherited inside tmux); force emacs.
 # Must precede the bindkeys below, which bind into whatever keymap is current.
 bindkey -e
+# Word motions/kills stop at punctuation (/ . - _ =), as under oh-my-zsh;
+# zsh's default WORDCHARS treats them as part of the word.
+WORDCHARS=''
 autoload -U up-line-or-beginning-search down-line-or-beginning-search
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
