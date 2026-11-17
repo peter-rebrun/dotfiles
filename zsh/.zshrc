@@ -39,6 +39,11 @@ zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
 bindkey '^[[A' up-line-or-beginning-search
 bindkey '^[[B' down-line-or-beginning-search
+# Home/End (Ghostty sends them for cmd+left/right): ESC O H/F straight from Ghostty,
+# ESC [1~ / [4~ once tmux has re-encoded them, ESC [H/F from other terminals.
+# oh-my-zsh bound these; vanilla emacs mode leaves them undefined and types the ~.
+for key in '^[OH' '^[[H' '^[[1~'; do bindkey "$key" beginning-of-line; done
+for key in '^[OF' '^[[F' '^[[4~'; do bindkey "$key" end-of-line; done
 
 # Aliases
 alias vim="nvim"

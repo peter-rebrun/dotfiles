@@ -986,7 +986,7 @@ do
       if disable_filetypes[vim.bo[bufnr].filetype] then
         return nil
       else
-        return { timeout_ms = 500 }
+        return { timeout_ms = 2000 } -- CUSTOM: was 500; the Mason oxfmt (node) takes ~250-400ms per call
       end
     end,
     default_format_opts = {
