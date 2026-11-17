@@ -20,6 +20,7 @@ part="${brief:h}/.${brief:t}.$$.part"
     |https://splose\.atlassian\.net/browse/[A-Z][A-Z0-9]+-[0-9]+
     |https://splose\.atlassian\.net/wiki/spaces/[A-Z0-9]+/pages/[0-9]+
     |https://splose\.slack\.com/archives/[A-Z0-9]+/p[0-9]+(?:\?thread_ts=[0-9.]+&cid=[A-Z0-9]+)?
+    |https://app\.incident\.io/splose/incidents/[0-9]+
     |[A-Z][A-Z0-9]+-[0-9]+)}x;
   my $gmail = qr{https://mail\.google\.com/mail/(?:\?authuser=[A-Za-z0-9._%+-]+\@splose\.com|u/[0-9]+/)\#all/thread-f:[0-9]+};
   my $template = qr{(?:Summarise $ref and draft my recommendation\.|Draft my review of $ref\.|Check the current state of $ref and list what is left to do\.|Draft my reply to (?:$ref|$gmail)\.)};

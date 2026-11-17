@@ -1,0 +1,37 @@
+# Ghostty config (replaces wezterm/.wezterm.lua).
+# Reference: https://ghostty.org/docs/config/reference
+# Reload with cmd+shift+, (default keybind).
+
+# --- Window: bare terminal, no titlebar, buttons, or tabs -------------------
+# "none" drops all decorations; macOS also disables native tabs in this mode.
+# Trade-off: no titlebar to drag by, so opt+click a frame edge to move/resize.
+# If that gets annoying, swap for `macos-titlebar-style = hidden`, which keeps
+# the window frame and rounded corners but still hides the titlebar.
+# window-decoration = none
+macos-titlebar-style = hidden
+
+# --- Colours ------------------------------------------------------------------
+# Match tmux: the catppuccin status bar is Frappe "mantle" (#292c3c). Painting
+# the terminal background the same colour makes the bar and panes one surface,
+# with no visible edge. The theme supplies the ANSI palette; explicit keys
+# below override the theme's own values.
+theme = Catppuccin Frappe
+background = 292c3c
+
+# --- Font ---------------------------------------------------------------------
+font-family = JetBrainsMono Nerd Font Mono
+font-size = 13
+# Disable ligatures (was harfbuzz_features calt=0, clig=0, liga=0 in WezTerm).
+font-feature = -calt, -clig, -liga
+
+# --- Keys: macOS-style line editing in the shell ------------------------------
+# cmd+arrows -> Home/End; opt+arrows -> alt+b / alt+f (backward/forward word).
+keybind = cmd+arrow_left=text:\x1bOH
+keybind = cmd+arrow_right=text:\x1bOF
+keybind = opt+arrow_left=esc:b
+keybind = opt+arrow_right=esc:f
+
+# --- Shell integration --------------------------------------------------------
+# TERM is xterm-ghostty, which remote hosts lack. ssh-terminfo installs the
+# terminfo on first connect; ssh-env falls back to xterm-256color if it can't.
+shell-integration-features = ssh-env, ssh-terminfo

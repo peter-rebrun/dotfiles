@@ -5,4 +5,5 @@ obsidian
 raycast
 shottr
 wezterm
+ghostty
 gcloud-cli

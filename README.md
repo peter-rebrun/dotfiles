@@ -12,7 +12,9 @@ nvim/.config/nvim/...      -> ~/.config/nvim/...
 zsh/.zshrc, .zprofile, ...  -> ~/.zshrc, ~/.zprofile, ~/.oh-my-zsh (submodule), ~/bin/{c,connect,wt}
 tmux/.tmux.conf            -> ~/.tmux.conf
 wezterm/.wezterm.lua       -> ~/.wezterm.lua
+ghostty/.config/ghostty/   -> ~/.config/ghostty/
 scripts/bin/...            -> ~/bin/...
+claude/.claude/statusline.sh -> ~/.claude/statusline.sh (Claude Code status line; settings.json stays local)
 ```
 
 ## Setup on a new machine
@@ -27,7 +29,7 @@ xargs brew install --cask < ~/dotfiles/brew_casks.txt
 
 # 3. Symlink the configs (stow is in brew_formulas.txt)
 cd ~/dotfiles
-stow nvim zsh tmux wezterm scripts
+stow nvim zsh tmux wezterm ghostty scripts claude
 ```
 
 ## Using stow
@@ -59,7 +61,8 @@ brew list --cask > brew_casks.txt
 
 ## Morning brief
 
-`morning-brief` (in the `scripts` package) runs Claude Code headless on weekday mornings to write a summary of Gmail, Calendar, Jira, Confluence and Slack into `03_Periodic/Briefs/` in the Obsidian vault.
+`morning-brief` (in the `scripts` package) runs Claude Code headless on weekday mornings to write a summary of Gmail, Calendar, Jira, Confluence, Slack and incident.io into `03_Periodic/Briefs/` in the Obsidian vault.
+It always runs on Opus, whatever the interactive `/model` default is, and reads incident.io through the desktop app's MCP server, so that app must be running and signed in.
 It needs the `daily-brief` plugin from `peter-rebrun/claude-skills`, and the claude.ai connectors logged in: run `claude`, then check `/mcp`.
 
 Install the LaunchAgent on the main laptop only; other laptops receive the briefs through vault sync.
