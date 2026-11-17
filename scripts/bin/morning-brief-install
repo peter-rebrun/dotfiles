@@ -9,6 +9,20 @@ PLIST=$HOME/Library/LaunchAgents/$LABEL.plist
 DOMAIN=gui/$(id -u)
 LOG=$HOME/Library/Logs/morning-brief.log
 
+# Every 15 minutes from 08:15 to 11:45, then hourly to 17:00 for a laptop opened late.
+intervals() {
+  local h m
+  for h in 8 9 10 11; do
+    for m in 0 15 30 45; do
+      (( h == 8 && m == 0 )) && continue
+      print "    <dict><key>Hour</key><integer>$h</integer><key>Minute</key><integer>$m</integer></dict>"
+    done
+  done
+  for h in {12..17}; do
+    print "    <dict><key>Hour</key><integer>$h</integer><key>Minute</key><integer>0</integer></dict>"
+  done
+}
+
 plist() {
   cat <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -24,10 +38,7 @@ plist() {
   </array>
   <key>StartCalendarInterval</key>
   <array>
-    <dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>15</integer></dict>
-    <dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>15</integer></dict>
-    <dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>15</integer></dict>
-    <dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>15</integer></dict>
+$(intervals)
   </array>
   <key>RunAtLoad</key><true/>
   <key>StandardOutPath</key><string>$LOG</string>
