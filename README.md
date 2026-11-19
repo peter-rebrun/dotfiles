@@ -65,6 +65,9 @@ brew list --cask > brew_casks.txt
 It always runs on Opus, whatever the interactive `/model` default is, and reads incident.io through the desktop app's MCP server, so that app must be running and signed in.
 It needs the `daily-brief` plugin from `peter-rebrun/claude-skills`, and the claude.ai connectors logged in: run `claude`, then check `/mcp`.
 
+The decision and each priority task are Tasks plugin `#task` items, created once per matter whichever source raises it.
+Tick (`[x]`) or cancel (`[-]`) a task once it is handled, wherever that happened, and later briefs stop raising it; open ones join the daily note's TODAY TASKS from the next day.
+
 Install the LaunchAgent on the main laptop only; other laptops receive the briefs through vault sync.
 It fires every 15 minutes from 08:15 to 11:45, then hourly until 17:00, and runs on the next wake when the laptop slept through a fire.
 A fire during a dark wake (lid closed, no display) is skipped, at most 3 runs a day reach Claude, `--force` runs included, and a failure notifies once a day.
@@ -79,6 +82,7 @@ launchctl kickstart -k gui/$(id -u)/com.peter-rebrun.morning-brief   # run throu
 
 `morning-brief-github` feeds GitHub review requests, PR state and notifications into the brief, read-only through the gh work account (`MORNING_BRIEF_GH_USER`, default `peterrebrun-splose`).
 `morning-brief-finalise` turns the skill's draft into the note, escaping Templater, HTML, image, link and Dataview syntax and dropping any Ask Claude prompt that is not one of the skill's templates.
+It also opens every new task, strips any Tasks field but the created date, and keeps a tick or cancel only when the note it replaces has it, so a mark in a brief is always yours.
 After pulling changes here, run `stow -R scripts` so new scripts land in `~/bin`; interactive skill runs call `~/bin/morning-brief-github` and `~/bin/morning-brief-finalise`.
 The log is `~/Library/Logs/morning-brief.log`; it records each run's session ID, cost and transcript path.
 
