@@ -41,20 +41,8 @@ require('mason-nvim-dap').setup {
 -- For more information, see |:help nvim-dap-ui|
 dapui.setup {
   -- Set icons to characters that are more likely to work in every terminal.
+  -- The controls keep dap-ui's Nerd Font icons; kickstart's media-key ones are missing from the terminal font.
   icons = { expanded = '▾', collapsed = '▸', current_frame = '*' },
-  controls = {
-    icons = {
-      pause = '⏸',
-      play = '▶',
-      step_into = '⏎',
-      step_over = '⏭',
-      step_out = '⏮',
-      step_back = 'b',
-      run_last = '▶▶',
-      terminate = '⏹',
-      disconnect = '⏏',
-    },
-  },
 }
 
 dap.listeners.after.event_initialized['dapui_config'] = dapui.open

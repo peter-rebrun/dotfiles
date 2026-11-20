@@ -1,4 +1,6 @@
 "$schema" = 'https://starship.rs/config-schema.json'
+# Every symbol must be in JetBrainsMono Nerd Font, or the terminal draws it from a fallback font,
+# so the defaults it lacks are overridden below; check one with `ghostty +show-face --cp=0x<hex>`.
 
 palette = "catppuccin_frappe"
 
@@ -37,6 +39,7 @@ format = "[ $path ]($style)"
 truncation_length = 4
 truncation_symbol = "…/"
 truncate_to_repo = true
+read_only = " 󰌾"
 
 [aws]
 symbol = " "
@@ -55,7 +58,7 @@ disabled = true
 format = '\[[$symbol($version)]($style)\]'
 
 [cmd_duration]
-format = '\[[⏱ $duration]($style)\]'
+format = '\[[󰔛 $duration]($style)\]'
 
 [cobol]
 disabled = true
@@ -63,6 +66,9 @@ format = '\[[$symbol($version)]($style)\]'
 
 [conda]
 format = '\[[$symbol$environment]($style)\]'
+
+[container]
+symbol = ""
 
 [crystal]
 disabled = true
@@ -86,7 +92,7 @@ format = '\[[$symbol$context]($style)\]'
 
 [dotnet]
 disabled = true
-format = '\[[$symbol($version)(🎯 $tfm)]($style)\]'
+format = '\[[$symbol($version)(󰓾 $tfm)]($style)\]'
 
 [elixir]
 disabled = true
@@ -117,8 +123,15 @@ symbol = " "
 style = "bold mauve"
 format = '\[[$symbol$branch]($style)\]'
 
+[git_commit]
+tag_symbol = "  "
+
 [git_status]
 format = '([\[$all_status$ahead_behind\]]($style))'
+ahead = "↑"
+behind = "↓"
+diverged = "↕"
+deleted = "✗"
 
 [golang]
 disabled = true
@@ -264,7 +277,7 @@ format = '\[[$symbol$environment]($style)\]'
 
 [status]
 # style = 'bg:blue'
-symbol = '✘ '
+symbol = '✗ '
 success_symbol = ''
 not_executable_symbol = '󰅙 '
 not_found_symbol = '󰦀 '

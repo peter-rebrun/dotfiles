@@ -37,7 +37,7 @@ vim.o.wrap = false
 -- words; continuation lines keep the indent (breakindent, set above by
 -- kickstart) and start with a marker so they are easy to spot.
 vim.o.linebreak = true
-vim.opt.showbreak = '↳ '
+vim.opt.showbreak = '↪ '
 
 -- Minimal number of screen lines to keep above and below the cursor (kickstart uses 10).
 vim.o.scrolloff = 15
